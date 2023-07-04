@@ -9,6 +9,7 @@ import (
 func (d *DB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	u := entity.User{}
 	var createdAt []uint8
+
 	row := d.db.QueryRow(`select * from users where phone_number=?`, phoneNumber)
 	err := row.Scan(&u.ID, &u.Name, &u.PhoneNumber, &createdAt)
 	if err == sql.ErrNoRows {
