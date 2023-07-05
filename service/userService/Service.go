@@ -82,7 +82,7 @@ func (s Service) PhoneNumberServiceValidator(req RegisterRequest) (bool, error) 
 		return false, fmt.Errorf("...Validator: this number is not valid...")
 	}
 
-	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); !isUnique || err == nil {
+	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); !isUnique {
 		if err != nil {
 			return false, err
 		}

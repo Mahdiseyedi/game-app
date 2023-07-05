@@ -148,3 +148,152 @@ func TestPhoneNumberServiceValidator(t *testing.T) {
 		})
 	}
 }
+
+// TestPasswordServiceValidator tests the PasswordServiceValidator method of the Service struct
+func TestPasswordServiceValidator(t *testing.T) {
+	// Create a mock repository
+	mockRepo := new(MockRepository)
+
+	// Create a service with the mock repository
+	service := New(mockRepo)
+
+	// Create some test cases with inputs and expected outputs
+	testCases := []struct {
+		name    string
+		request RegisterRequest
+		result  bool
+		err     error
+	}{
+		{
+			name: "valid password",
+			request: RegisterRequest{
+				Name:        "Alice",
+				PhoneNumber: "09123456789",
+				Password:    "secret123", // valid password with at least 8 characters and not equal to "password"
+			},
+			result: true,
+			err:    nil,
+		},
+		{
+			name: "short password",
+			request: RegisterRequest{
+				Name:        "Bob",
+				PhoneNumber: "09123456789",
+				Password:    "pass", // invalid password with less than 8 characters
+			},
+			result: false,
+			err:    errors.New("...Validator: Password len most grater than 8..."),
+		},
+		{
+			name: "simple password",
+			request: RegisterRequest{
+				Name:        "Charlie",
+				PhoneNumber: "09123456789",
+				Password:    "password", // invalid password equal to "password"
+			},
+			result: false,
+			err:    errors.New("...Validator: so simple..."),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := service.PasswordServiceValidator(tc.request)
+
+			assert.Equal(t, tc.result, res)
+			assert.Equal(t, tc.err, err)
+
+		})
+	}
+}
+
+// TestRegister tests the Register method of the Service struct
+
+//wrong case :
+/*
+{
+			name: "invalid phone number",
+			request: RegisterRequest{
+				Name:        "Bob",
+				PhoneNumber: "1264567890",
+				Password:    "secret456",
+			},
+			result: RegisterResponse{},
+			err:    errors.New("...Validator: this number is not valid..."),
+		},
+*/
+
+func TestRegister(t *testing.T) {
+	// Create a mock repository
+	mockRepo := new(MockRepository)
+
+	// Create a service with the mock repository
+	service := New(mockRepo)
+
+	// Create some test cases with inputs and expected outputs
+	testCases := []struct {
+		name    string
+		request RegisterRequest
+		result  RegisterResponse
+		err     error
+	}{
+		{
+			name: "valid registration",
+			request: RegisterRequest{
+				Name:        "Alice",
+				PhoneNumber: "09786456789",
+				Password:    "secret123",
+			},
+			result: RegisterResponse{
+				user: user.User{
+					ID:          1, // mock ID returned by the repository
+					Name:        "Alice",
+					PhoneNumber: "09198996789",
+					Password:    "5ebe2294ecd0e0f08eab7690d2a6ee69", // hashed password using md5
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "invalid phone number",
+			request: RegisterRequest{
+				Name:        "Bob",
+				PhoneNumber: "1264567890",
+				Password:    "secret456",
+			},
+			result: RegisterResponse{},
+			err:    errors.New("...Validator: this number is not valid..."),
+		},
+		{
+			name: "duplicate phone number",
+			request: RegisterRequest{
+				Name:        "Charlie",
+				PhoneNumber: "09123456789", // same as Alice's phone number
+				Password:    "secret789",
+			},
+			result: RegisterResponse{},
+			err:    errors.New("...Validator: phone number is not unique..."),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.err == nil {
+				mockRepo.On("IsPhoneNumberUnique", tc.request.PhoneNumber).Return(true, nil)
+				mockRepo.On("RegisterUser", mock.AnythingOfType("user.User")).Return(tc.result.user, nil)
+			} else if tc.err.Error() == "...Validator: this number is not valid..." {
+				mockRepo.On("IsPhoneNumberUnique", tc.request.PhoneNumber).Return(false, errors.New("phone number is invalid"))
+			} else if tc.err.Error() == "...Validator: phone number is not unique..." {
+				mockRepo.On("IsPhoneNumberUnique", tc.request.PhoneNumber).Return(false, nil)
+			}
+
+			res, err := service.Register(tc.request)
+
+			assert.Equal(t, tc.result, res)
+			assert.Equal(t, tc.err, err)
+
+			mockRepo.AssertExpectations(t)
+
+		})
+	}
+}
