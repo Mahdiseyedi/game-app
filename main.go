@@ -20,8 +20,8 @@ func main() {
 	rep := userService.Repository(sqlTest)
 
 	var req userService.RegisterRequest
-	req.Name = "alaki"
-	req.PhoneNumber = "09021919004"
+	req.Name = "userian"
+	req.PhoneNumber = "09121619004"
 
 	//srv.RegisterUser(user.User{
 	//	ID:          0,
