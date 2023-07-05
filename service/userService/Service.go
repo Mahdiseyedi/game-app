@@ -2,13 +2,13 @@ package userService
 
 import (
 	"fmt"
-	"game-app/entity"
+	"game-app/entity/user"
 	"game-app/pkg/phoneNumber"
 )
 
 type Repository interface {
 	IsPhoneNumberUnique(phoneNumber string) (bool, error)
-	RegisterUser(u entity.User) (entity.User, error)
+	RegisterUser(u user.User) (user.User, error)
 }
 
 type Service struct {
@@ -21,7 +21,7 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	user entity.User
+	user user.User
 }
 
 func New(repo Repository) Service {
@@ -48,7 +48,7 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	if len(req.Name) <= 3 {
 		return RegisterResponse{}, fmt.Errorf("name lenght should grater than 3")
 	}
-	user := entity.User{
+	user := user.User{
 		ID:          0,
 		Name:        req.Name,
 		PhoneNumber: req.PhoneNumber,

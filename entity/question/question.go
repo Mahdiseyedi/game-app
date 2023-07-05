@@ -1,4 +1,4 @@
-package entity
+package question
 
 type Question struct {
 	ID              uint

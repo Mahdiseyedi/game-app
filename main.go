@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"game-app/entity"
+	"game-app/entity/user"
 	"game-app/repository/mysql"
 	"game-app/service/userService"
-	"io"
 	"net/http"
 )
 
@@ -18,8 +16,39 @@ func (u UserRegisterHandler) ServeHttp(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	sqlTest := mysql.New()
+	rep := userService.Repository(sqlTest)
 
-	http.HandleFunc("/users/register", func(writer http.ResponseWriter, request *http.Request) {
+	var req userService.RegisterRequest
+	req.Name = "alaki"
+	req.PhoneNumber = "09021919004"
+
+	//srv.RegisterUser(user.User{
+	//	ID:          0,
+	//	Name:        "mahdi",
+	//	PhoneNumber: "0912454545",
+	//})
+	srv := userService.New(rep)
+	resp, qErr := srv.Register(req)
+
+	fmt.Println(resp)
+	fmt.Println(qErr)
+}
+
+func test_sql() {
+	sqlTest := mysql.New()
+	srv := userService.Repository(sqlTest)
+	srv.RegisterUser(user.User{})
+	ph := "13434231"
+
+	res, err := sqlTest.IsPhoneNumberUnique(ph)
+
+	fmt.Println(res)
+	fmt.Println(err)
+}
+
+/*
+http.HandleFunc("/users/register", func(writer http.ResponseWriter, request *http.Request) {
 
 		if request.Method == http.MethodGet {
 			fmt.Println("Get")
@@ -56,16 +85,4 @@ func main() {
 	})
 
 	http.ListenAndServe(":8080", nil)
-}
-
-func test_sql() {
-	sqlTest := mysql.New()
-	srv := userService.Repository(sqlTest)
-	srv.RegisterUser(entity.User{})
-	ph := "13434231"
-
-	res, err := sqlTest.IsPhoneNumberUnique(ph)
-
-	fmt.Println(res)
-	fmt.Println(err)
-}
+*/

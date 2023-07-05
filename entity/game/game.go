@@ -1,6 +1,9 @@
-package entity
+package game
 
-import "time"
+import (
+	"game-app/entity/question"
+	"time"
+)
 
 type Game struct {
 	ID           uint
@@ -22,5 +25,5 @@ type PlayerAnswer struct {
 	ID         uint
 	PlayerID   uint
 	QuestionID uint
-	Choice     PossibleAnswerChoice
+	Choice     question.PossibleAnswerChoice
 }
