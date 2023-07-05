@@ -1,7 +1,6 @@
 package phoneNumber
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -19,6 +18,5 @@ func IsValid(phoneNumber string) bool {
 		return false
 	}
 
-	fmt.Println("phone Number is Valid")
 	return true
 }

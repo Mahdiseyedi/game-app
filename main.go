@@ -16,23 +16,7 @@ func (u UserRegisterHandler) ServeHttp(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	sqlTest := mysql.New()
-	rep := userService.Repository(sqlTest)
-
-	var req userService.RegisterRequest
-	req.Name = "userian"
-	req.PhoneNumber = "09121619004"
-
-	//srv.RegisterUser(user.User{
-	//	ID:          0,
-	//	Name:        "mahdi",
-	//	PhoneNumber: "0912454545",
-	//})
-	srv := userService.New(rep)
-	resp, qErr := srv.Register(req)
-
-	fmt.Println(resp)
-	fmt.Println(qErr)
+	test_Register_By_Service()
 }
 
 func test_sql() {
@@ -45,6 +29,28 @@ func test_sql() {
 
 	fmt.Println(res)
 	fmt.Println(err)
+}
+
+func test_Register_By_Service() {
+	sqlTest := mysql.New()
+	rep := userService.Repository(sqlTest)
+
+	var req userService.RegisterRequest
+	req.Name = "hasher"
+	req.PhoneNumber = "09541619004"
+	req.Password = "mahdi@1234567"
+	//srv.RegisterUser(user.User{
+	//	ID:          0,
+	//	Name:        "mahdi",
+	//	PhoneNumber: "0912454545",
+	//})
+
+	srv := userService.New(rep)
+	resp, qErr := srv.Register(req)
+
+	fmt.Println(resp)
+	fmt.Println(qErr)
+
 }
 
 /*
