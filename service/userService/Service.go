@@ -24,13 +24,17 @@ type RegisterResponse struct {
 	user entity.User
 }
 
+func New(repo Repository) Service {
+	return Service{repo: repo}
+}
+
 func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	//TODO - implementing otp verification for phoneNumber
 	if !phoneNumber.IsValid(req.PhoneNumber) {
 		return RegisterResponse{}, fmt.Errorf("this number is not valid")
 	}
 
-	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); !isUnique || err != nil {
+	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); !isUnique || err == nil {
 		if err != nil {
 			return RegisterResponse{}, err
 		}
@@ -39,6 +43,7 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 			return RegisterResponse{}, fmt.Errorf("phone number is not unique")
 		}
 	}
+	fmt.Println("...phone number is unique...")
 
 	if len(req.Name) <= 3 {
 		return RegisterResponse{}, fmt.Errorf("name lenght should grater than 3")
@@ -49,6 +54,7 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 		PhoneNumber: req.PhoneNumber,
 	}
 
+	fmt.Println("user name is true form")
 	createdUser, err := s.repo.RegisterUser(user)
 	if err != nil {
 		return RegisterResponse{}, fmt.Errorf("unexcepted Register Error %w", err)

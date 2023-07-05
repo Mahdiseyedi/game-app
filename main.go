@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"game-app/entity"
 	"game-app/repository/mysql"
 	"game-app/service/userService"
 	"io"
@@ -31,28 +32,25 @@ func main() {
 			writer.Write(js)
 		}
 		if request.Method == http.MethodPost {
-			ur := map[string]string{}
+			var t userService.RegisterRequest
 			fmt.Println("post")
 			u, _ := io.ReadAll(request.Body)
-			err := json.Unmarshal(u, &ur)
+			err := json.Unmarshal(u, &t)
 			if err != nil {
 				fmt.Println("this is not valid json format", err)
 				return
 			}
 
-			var t userService.RegisterRequest
-			t.Name = ur["name"]
-			t.PhoneNumber = ur["phoneNumber"]
-			fmt.Println(t.Name)
-			fmt.Println(t.PhoneNumber)
-			var s userService.Service
-			iu, erq := s.Register(t)
-			if erq != nil {
-				fmt.Println("smth wrong in Db, ", erq)
-				return
-			}
-			fmt.Println(iu)
+			mysqlrepo := mysql.New()
+			th := userService.New(mysqlrepo)
 
+			fmt.Println(t)
+
+			k, e := th.Register(t)
+			if e != nil {
+				fmt.Println(e)
+			}
+			fmt.Println(k)
 		}
 
 	})
@@ -62,7 +60,8 @@ func main() {
 
 func test_sql() {
 	sqlTest := mysql.New()
-
+	srv := userService.Repository(sqlTest)
+	srv.RegisterUser(entity.User{})
 	ph := "13434231"
 
 	res, err := sqlTest.IsPhoneNumberUnique(ph)
