@@ -5,6 +5,8 @@ import (
 	"game-app/entity/user"
 	"game-app/pkg/hash"
 	"game-app/pkg/phoneNumber"
+	"github.com/golang-jwt/jwt/v5"
+	"time"
 )
 
 type Repository interface {
@@ -15,7 +17,8 @@ type Repository interface {
 }
 
 type Service struct {
-	repo Repository
+	signKey string
+	repo    Repository
 }
 
 type RegisterRequest struct {
@@ -34,6 +37,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
+	AccessToken string
 }
 
 type UserProfileRequest struct {
@@ -44,8 +48,8 @@ type UserProfileResponse struct {
 	Name string
 }
 
-func New(repo Repository) Service {
-	return Service{repo: repo}
+func New(repo Repository, signKey string) Service {
+	return Service{repo: repo, signKey: signKey}
 }
 
 func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
@@ -85,14 +89,19 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 	reqUser, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
-		return LoginResponse{}, nil
+		return LoginResponse{}, err
 	}
 
 	if hash.GetMd5Hash(req.Password) != reqUser.Password {
 		return LoginResponse{}, fmt.Errorf("...Service: Login failed!...")
 	}
 
-	return LoginResponse{}, nil
+	jwtToken, tErr := createToken(reqUser.ID, s.signKey)
+	if tErr != nil {
+		return LoginResponse{}, fmt.Errorf("unexpected error: %w", tErr)
+	}
+
+	return LoginResponse{AccessToken: jwtToken}, nil
 }
 
 func (s Service) GetUserProfile(req UserProfileRequest) (UserProfileResponse, error) {
@@ -145,4 +154,35 @@ func (s Service) PasswordServiceValidator(req RegisterRequest) (bool, error) {
 	}
 
 	return true, nil
+}
+
+//------------------------------------------------------------------------------------------
+type Claims struct {
+	RegisteredClaims jwt.RegisteredClaims
+	UserID           uint
+}
+
+func (c Claims) Valid() error {
+	return nil
+}
+
+func createToken(userID uint, signKey string) (string, error) {
+	// create a signer for rsa 256
+	// TODO - replace with rsa 256 RS256 - https://github.com/golang-jwt/jwt/blob/main/http_example_test.go
+
+	// set our claims
+	claims := Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
+		},
+		UserID: userID,
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := accessToken.SignedString([]byte(signKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

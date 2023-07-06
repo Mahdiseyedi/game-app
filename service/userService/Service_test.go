@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const (
+	JwtSignKey = "jwt_secret"
+)
+
 // MockRepository is a mock implementation of the Repository interface
 type MockRepository struct {
 	mock.Mock
@@ -41,7 +45,7 @@ func TestNameServiceValidator(t *testing.T) {
 	mockRepo := new(MockRepository)
 
 	// Create a service with the mock repository
-	service := New(mockRepo)
+	service := New(mockRepo, JwtSignKey)
 
 	// Create some test cases with inputs and expected outputs
 	testCases := []struct {
@@ -97,7 +101,7 @@ func TestPhoneNumberServiceValidator(t *testing.T) {
 	mockRepo := new(MockRepository)
 
 	// Create a service with the mock repository
-	service := New(mockRepo)
+	service := New(mockRepo, JwtSignKey)
 
 	// Create some test cases with inputs and expected outputs
 	testCases := []struct {
@@ -160,7 +164,7 @@ func TestPasswordServiceValidator(t *testing.T) {
 	mockRepo := new(MockRepository)
 
 	// Create a service with the mock repository
-	service := New(mockRepo)
+	service := New(mockRepo, JwtSignKey)
 
 	// Create some test cases with inputs and expected outputs
 	testCases := []struct {
@@ -217,7 +221,7 @@ func TestRegister(t *testing.T) {
 	mockRepo := new(MockRepository)
 
 	// Create a service with the mock repository
-	service := New(mockRepo)
+	service := New(mockRepo, JwtSignKey)
 
 	// Create some test cases with inputs and expected outputs
 	testCases := []struct {
@@ -234,7 +238,7 @@ func TestRegister(t *testing.T) {
 				Password:    "secret123",
 			},
 			result: RegisterResponse{
-				user: user.User{
+				User: user.User{
 					ID:          1, // mock ID returned by the repository
 					Name:        "Alice",
 					PhoneNumber: "09198996789",
@@ -260,7 +264,7 @@ func TestRegister(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.err == nil {
 				mockRepo.On("IsPhoneNumberUnique", tc.request.PhoneNumber).Return(true, nil)
-				mockRepo.On("RegisterUser", mock.AnythingOfType("user.User")).Return(tc.result.user, nil)
+				mockRepo.On("RegisterUser", mock.AnythingOfType("user.User")).Return(tc.result.User, nil)
 			} else if tc.err.Error() == "...Validator: this number is not valid..." {
 				mockRepo.On("IsPhoneNumberUnique", tc.request.PhoneNumber).Return(false, errors.New("phone number is invalid"))
 			} else if tc.err.Error() == "...Validator: phone number is not unique..." {

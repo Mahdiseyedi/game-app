@@ -10,16 +10,21 @@ import (
 	"net/http"
 )
 
-type UserRegisterHandler struct {
-}
-
-func (u UserRegisterHandler) ServeHttp(w http.ResponseWriter, r *http.Request) {
-
-}
+const (
+	JwtSignKey = "jwt_secret"
+)
 
 func main() {
 
-	http.HandleFunc("/users/register", userRegisterHandler)
+	http.HandleFunc("/healthcheck", healthCheckHandler)
+	http.HandleFunc("/users/register", UserRegisterHandler)
+
+	//TODO - implementing GetUserProfile handler
+	http.HandleFunc("/users/profile", UserGetProfileHandler)
+
+	//TODO - implementing Login handler
+	http.HandleFunc("/users/login", UserLoginHandler)
+
 	log.Println("server is listening on port 8088...")
 	http.ListenAndServe(":8080", nil)
 }
@@ -38,7 +43,7 @@ func test_Register_By_Service() {
 	//	PhoneNumber: "0912454545",
 	//})
 
-	srv := userService.New(rep)
+	srv := userService.New(rep, JwtSignKey)
 	resp, qErr := srv.GetUserProfile(req)
 
 	fmt.Println(resp)
@@ -46,7 +51,7 @@ func test_Register_By_Service() {
 
 }
 
-func userRegisterHandler(writer http.ResponseWriter, req *http.Request) {
+func UserRegisterHandler(writer http.ResponseWriter, req *http.Request) {
 
 	if req.Method != http.MethodPost {
 		fmt.Fprintf(writer, `{"error":"Invalid Method!"}`)
@@ -62,7 +67,7 @@ func userRegisterHandler(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	mysqlrepo := mysql.New()
-	srv := userService.New(mysqlrepo)
+	srv := userService.New(mysqlrepo, JwtSignKey)
 
 	res, rErr := srv.Register(rReq)
 	if rErr != nil {
@@ -71,6 +76,71 @@ func userRegisterHandler(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Fprintf(writer, `{"your user id":"%d"}`, res.User.ID)
+}
+func UserGetProfileHandler(writer http.ResponseWriter, req *http.Request) {
+
+	if req.Method != http.MethodPost {
+		fmt.Fprintf(writer, `{"error":"Invalid Method!"}`)
+		return
+	}
+
+	var rReq userService.RegisterRequest
+	body, _ := io.ReadAll(req.Body)
+	err := json.Unmarshal(body, &rReq)
+	if err != nil {
+		fmt.Fprintf(writer, `{"error":"invalid json format..."}`)
+		return
+	}
+
+	mysqlrepo := mysql.New()
+	srv := userService.New(mysqlrepo, JwtSignKey)
+
+	res, rErr := srv.Register(rReq)
+	if rErr != nil {
+		fmt.Fprintf(writer, `{"error":"%s"}`, rErr)
+		return
+	}
+
+	fmt.Fprintf(writer, `{"your user id":"%d"}`, res.User.ID)
+}
+func UserLoginHandler(writer http.ResponseWriter, req *http.Request) {
+
+	r, e := userService.CreateToken(12, JwtSignKey)
+	if e != nil {
+		fmt.Fprintf(writer, `{"error": %s `, e)
+		return
+	}
+	fmt.Println(r)
+
+	if req.Method != http.MethodPost {
+		fmt.Fprintf(writer, `{"error":"Invalid Method!"}`)
+		return
+	}
+
+	var lReq userService.LoginRequest
+	body, _ := io.ReadAll(req.Body)
+	err := json.Unmarshal(body, &lReq)
+	if err != nil {
+		fmt.Fprintf(writer, `{"error":"invalid json format..."}`)
+		return
+	}
+
+	mysqlrepo := mysql.New()
+	srv := userService.New(mysqlrepo, JwtSignKey)
+
+	res, rErr := srv.Login(lReq)
+	if rErr != nil {
+		fmt.Fprintf(writer, `{"error":"%s"}`, rErr)
+		return
+	}
+
+	loginResult, mErr := json.Marshal(res)
+	if mErr != nil {
+		fmt.Fprintf(writer, `{"error":"%s"}`, mErr)
+		return
+	}
+
+	writer.Write(loginResult)
 }
 
 func healthCheckHandler(writer http.ResponseWriter, req *http.Request) {
