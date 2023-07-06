@@ -33,6 +33,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
+	user user.User
 }
 
 func New(repo Repository) Service {
@@ -73,9 +74,18 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	}, nil
 }
 
-//func (s Service) Login(req LoginRequest) (LoginResponse, error) {
-//	return LoginResponse{}, nil
-//}
+func (s Service) Login(req LoginRequest) (LoginResponse, error) {
+	reqUser, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
+	if err != nil {
+		return LoginResponse{}, nil
+	}
+
+	if hash.GetMd5Hash(req.Password) != reqUser.Password {
+		return LoginResponse{}, fmt.Errorf("...Service: Login failed!...")
+	}
+
+	return LoginResponse{user: reqUser}, nil
+}
 
 func (s Service) PhoneNumberServiceValidator(req RegisterRequest) (bool, error) {
 	if !phoneNumber.IsValid(req.PhoneNumber) {

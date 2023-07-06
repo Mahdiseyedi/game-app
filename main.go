@@ -35,8 +35,8 @@ func test_Register_By_Service() {
 	sqlTest := mysql.New()
 	rep := userService.Repository(sqlTest)
 
-	var req userService.RegisterRequest
-	req.Name = "hasher"
+	var req userService.LoginRequest
+	//req.Name = "hasher"
 	req.PhoneNumber = "09541619004"
 	req.Password = "mahdi@1234567"
 	//srv.RegisterUser(user.User{
@@ -46,7 +46,7 @@ func test_Register_By_Service() {
 	//})
 
 	srv := userService.New(rep)
-	resp, qErr := srv.Register(req)
+	resp, qErr := srv.Login(req)
 
 	fmt.Println(resp)
 	fmt.Println(qErr)
