@@ -7,11 +7,8 @@ import (
 )
 
 func (d *DB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
-	u := user.User{}
-	var createdAt []uint8
-
 	row := d.db.QueryRow(`select * from users where phone_number=?`, phoneNumber)
-	err := row.Scan(&u.ID, &u.Name, &u.PhoneNumber, &createdAt)
+	_, err := ScanUser(row)
 	if err == sql.ErrNoRows {
 		return true, err
 	} else if err != nil {
@@ -34,14 +31,31 @@ func (d *DB) RegisterUser(u user.User) (user.User, error) {
 }
 
 func (d *DB) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
-	u := user.User{}
-	var createdAt []uint8
+
 	row := d.db.QueryRow(`select * from users where phone_number =?`, phoneNumber)
-	err := row.Scan(&u.ID, &u.Name, &u.PhoneNumber, &createdAt, &u.Password)
+	u, err := ScanUser(row)
 
 	if err != nil {
 		return user.User{}, fmt.Errorf("...no user find with that phone number, %w", err)
 	}
 
 	return u, nil
+}
+
+func (d *DB) GetUserByID(userID uint) (user.User, error) {
+	row := d.db.QueryRow(`select * from users where id=?`, userID)
+	u, err := ScanUser(row)
+
+	if err != nil {
+		return user.User{}, fmt.Errorf("...no user find with that ID, %w", err)
+	}
+	return u, nil
+}
+
+func ScanUser(row *sql.Row) (user.User, error) {
+	var createdAt []uint8
+	u := user.User{}
+	err := row.Scan(&u.ID, &u.Name, &u.PhoneNumber, &createdAt, &u.Password)
+
+	return u, err
 }

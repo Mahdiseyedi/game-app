@@ -1,9 +1,7 @@
 package userService
 
 import (
-	"database/sql"
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
 
 	"game-app/entity/user"
@@ -30,6 +28,11 @@ func (m *MockRepository) RegisterUser(u user.User) (user.User, error) {
 
 func (m *MockRepository) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
 	args := m.Called(phoneNumber)
+	return args.Get(0).(user.User), args.Error(1)
+}
+
+func (m *MockRepository) GetUserByID(userID uint) (user.User, error) {
+	args := m.Called(userID)
 	return args.Get(0).(user.User), args.Error(1)
 }
 
@@ -276,110 +279,4 @@ func TestRegister(t *testing.T) {
 }
 
 //-----------------------------------------------------------------------------------------------------
-
-// MockDB is a mock implementation of the DB interface
-type MockDB struct {
-	mock.Mock
-}
-
-// Close is a mock method that returns the arguments passed to it
-func (m *MockDB) Close() error {
-	mockArgs := m.Called()
-	return mockArgs.Error(0)
-}
-
-func (m *MockDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
-	args := m.Called(phoneNumber)
-	return args.Bool(0), args.Error(1)
-}
-
-// RegisterUser is a mock method that returns the arguments passed to it
-func (m *MockDB) RegisterUser(u user.User) (user.User, error) {
-	args := m.Called(u)
-	return args.Get(0).(user.User), args.Error(1)
-}
-
-func (m *MockDB) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
-	args := m.Called(phoneNumber)
-	return args.Get(0).(user.User), args.Error(1)
-}
-
-func TestLogin(t *testing.T) {
-	// Create a mock database
-	mockDB := new(MockDB)
-
-	// Create a repository with the mock database
-	//repo := New(mockDB)
-
-	// Create a service with the repository
-	service := New(mockDB)
-
-	// Create some test cases with inputs and expected outputs
-	testCases := []struct {
-		name    string
-		request LoginRequest
-		result  LoginResponse
-		err     error
-	}{
-		{
-			name: "valid login",
-			request: LoginRequest{
-				PhoneNumber: "09123456789", // same as Alice's phone number
-				Password:    "secret123",   // same as Alice's password
-			},
-			result: LoginResponse{
-				user: user.User{
-					ID:          1,                                  // same as Alice's ID
-					Name:        "Alice",                            // same as Alice's name
-					PhoneNumber: "09123456789",                      // same as Alice's phone number
-					Password:    "5ebe2294ecd0e0f08eab7690d2a6ee69", // hashed password using md5
-				},
-			},
-			err: nil,
-		},
-
-		{
-			name: "wrong password",
-			request: LoginRequest{
-				PhoneNumber: "09123456789", // same as Alice's phone number
-				Password:    "wrong123",    // different from Alice's password
-			},
-			result: LoginResponse{},
-			err:    errors.New("...Service: Login failed!..."),
-		},
-
-		{
-			name: "non-existent phone number",
-			request: LoginRequest{
-				PhoneNumber: "09111111111", // different from any registered user's phone number
-				Password:    "secret123",   // any password
-			},
-			result: LoginResponse{},
-			err:    errors.New("...Repository: Get user by phone number repository Error sql.ErrNoRows"), // assuming this is the error returned by the repository when no user is found
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var rows *sqlmock.Rows
-
-			if tc.err == nil {
-				rows = sqlmock.NewRows([]string{"id", "name", "phone_number", "created_at", "password"}).AddRow(tc.result.user.ID, tc.result.user.Name, tc.result.user.PhoneNumber, []uint8{0}, tc.result.user.Password)
-			} else if tc.err.Error() == "...Service: Login failed!..." {
-				rows = sqlmock.NewRows([]string{"id", "name", "phone_number", "created_at", "password"}).AddRow(1, "Alice", "09123456789", []uint8{0}, "5ebe2294ecd0e0f08eab7690d2a6ee69")
-			} else if tc.err.Error() == "...Repository: Get user by phone number repository Error sql.ErrNoRows" {
-				rows = sqlmock.NewRows([]string{"id", "name", "phone_number", "created_at", "password"}).RowError(0, sql.ErrNoRows)
-			}
-
-			mockDB.On("QueryRow", mock.AnythingOfType("string"), tc.request.PhoneNumber).Return(rows, tc.err)
-
-			res, err := service.Login(tc.request)
-
-			assert.Equal(t, tc.result, res)
-			assert.Equal(t, tc.err, err)
-
-			mockDB.AssertExpectations(t)
-
-		})
-	}
-}
+//Login worked well

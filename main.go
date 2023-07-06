@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"game-app/entity/user"
 	"game-app/repository/mysql"
 	"game-app/service/userService"
+	"io"
+	"log"
 	"net/http"
 )
 
@@ -16,29 +18,20 @@ func (u UserRegisterHandler) ServeHttp(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	test_Register_By_Service()
-}
 
-func test_sql() {
-	sqlTest := mysql.New()
-	srv := userService.Repository(sqlTest)
-	srv.RegisterUser(user.User{})
-	ph := "13434231"
-
-	res, err := sqlTest.IsPhoneNumberUnique(ph)
-
-	fmt.Println(res)
-	fmt.Println(err)
+	http.HandleFunc("/users/register", userRegisterHandler)
+	log.Println("server is listening on port 8088...")
+	http.ListenAndServe(":8080", nil)
 }
 
 func test_Register_By_Service() {
 	sqlTest := mysql.New()
 	rep := userService.Repository(sqlTest)
 
-	var req userService.LoginRequest
-	//req.Name = "hasher"
-	req.PhoneNumber = "09541619004"
-	req.Password = "mahdi@1234567"
+	var req userService.UserProfileRequest
+
+	req.UserID = 7
+
 	//srv.RegisterUser(user.User{
 	//	ID:          0,
 	//	Name:        "mahdi",
@@ -46,49 +39,40 @@ func test_Register_By_Service() {
 	//})
 
 	srv := userService.New(rep)
-	resp, qErr := srv.Login(req)
+	resp, qErr := srv.GetUserProfile(req)
 
 	fmt.Println(resp)
 	fmt.Println(qErr)
 
 }
 
-/*
-http.HandleFunc("/users/register", func(writer http.ResponseWriter, request *http.Request) {
+func userRegisterHandler(writer http.ResponseWriter, req *http.Request) {
 
-		if request.Method == http.MethodGet {
-			fmt.Println("Get")
-			data := map[string]string{"message": "hi\n", "name": "mahdi"}
-			js, err := json.Marshal(data)
-			if err != nil {
-				fmt.Println(err)
-			}
-			writer.Header().Set("Content-Type", "application/json")
-			writer.Write(js)
-		}
-		if request.Method == http.MethodPost {
-			var t userService.RegisterRequest
-			fmt.Println("post")
-			u, _ := io.ReadAll(request.Body)
-			err := json.Unmarshal(u, &t)
-			if err != nil {
-				fmt.Println("this is not valid json format", err)
-				return
-			}
+	if req.Method != http.MethodPost {
+		fmt.Fprintf(writer, `{"error":"Invalid Method!"}`)
+		return
+	}
 
-			mysqlrepo := mysql.New()
-			th := userService.New(mysqlrepo)
+	var rReq userService.RegisterRequest
+	body, _ := io.ReadAll(req.Body)
+	err := json.Unmarshal(body, &rReq)
+	if err != nil {
+		fmt.Fprintf(writer, `{"error":"invalid json format..."}`)
+		return
+	}
 
-			fmt.Println(t)
+	mysqlrepo := mysql.New()
+	srv := userService.New(mysqlrepo)
 
-			k, e := th.Register(t)
-			if e != nil {
-				fmt.Println(e)
-			}
-			fmt.Println(k)
-		}
+	res, rErr := srv.Register(rReq)
+	if rErr != nil {
+		fmt.Fprintf(writer, `{"error":"%s"}`, rErr)
+		return
+	}
 
-	})
+	fmt.Fprintf(writer, `{"your user id":"%d"}`, res.User.ID)
+}
 
-	http.ListenAndServe(":8080", nil)
-*/
+func healthCheckHandler(writer http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(writer, `{"message": "everything is good!"}`)
+}

@@ -11,6 +11,7 @@ type Repository interface {
 	IsPhoneNumberUnique(phoneNumber string) (bool, error)
 	RegisterUser(u user.User) (user.User, error)
 	GetUserByPhoneNumber(phoneNumber string) (user.User, error)
+	GetUserByID(userID uint) (user.User, error)
 }
 
 type Service struct {
@@ -24,16 +25,23 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	user user.User
+	User user.User
 }
 
 type LoginRequest struct {
-	PhoneNumber string
-	Password    string
+	PhoneNumber string `json:"phone_number"`
+	Password    string `json:"password"`
 }
 
 type LoginResponse struct {
-	user user.User
+}
+
+type UserProfileRequest struct {
+	UserID uint `json:"id"`
+}
+
+type UserProfileResponse struct {
+	Name string
 }
 
 func New(repo Repository) Service {
@@ -70,7 +78,7 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	}
 
 	return RegisterResponse{
-		user: createdUser,
+		User: createdUser,
 	}, nil
 }
 
@@ -84,7 +92,16 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, fmt.Errorf("...Service: Login failed!...")
 	}
 
-	return LoginResponse{user: reqUser}, nil
+	return LoginResponse{}, nil
+}
+
+func (s Service) GetUserProfile(req UserProfileRequest) (UserProfileResponse, error) {
+	userProfile, err := s.repo.GetUserByID(req.UserID)
+	if err != nil {
+		return UserProfileResponse{}, err
+	}
+
+	return UserProfileResponse{Name: userProfile.Name}, nil
 }
 
 func (s Service) PhoneNumberServiceValidator(req RegisterRequest) (bool, error) {
