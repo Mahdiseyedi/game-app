@@ -50,5 +50,21 @@ func (s Server) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, resp)
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (s Server) UserProfile(c echo.Context) error {
+	authToken := c.Request().Header.Get("Authorization")
+
+	claims, err := s.authSvc.VerifyToken(authToken)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+	}
+
+	resp, err := s.userSvc.GetUserProfile(userService.UserProfileRequest{UserID: claims.UserID})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }

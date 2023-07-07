@@ -30,10 +30,14 @@ type RegisterRequest struct {
 	Password    string `json:"password"`
 }
 
-type RegisterResponse struct {
+type UserInfo struct {
 	ID          uint   `json:"id"`
 	Name        string `json:"name"`
 	PhoneNumber string `json:"phone_number"`
+}
+
+type RegisterResponse struct {
+	UsrInfo UserInfo `json:"user_info"`
 }
 
 type LoginRequest struct {
@@ -41,9 +45,14 @@ type LoginRequest struct {
 	Password    string `json:"password"`
 }
 
-type LoginResponse struct {
+type Tokens struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type LoginResponse struct {
+	UsrInfo UserInfo `json:"user_info"`
+	Tokens  Tokens   `json:"tokens"`
 }
 
 type UserProfileRequest struct {
@@ -88,9 +97,11 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	}
 
 	return RegisterResponse{
-		ID:          createdUser.ID,
-		Name:        createdUser.Name,
-		PhoneNumber: createdUser.PhoneNumber,
+		UsrInfo: UserInfo{
+			ID:          createdUser.ID,
+			Name:        createdUser.Name,
+			PhoneNumber: createdUser.PhoneNumber,
+		},
 	}, nil
 }
 
@@ -104,16 +115,29 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, fmt.Errorf("...Service: Login failed!...")
 	}
 
-	accessToken, tErr := s.auth.CreateAccessToken(reqUser)
-	if tErr != nil {
-		return LoginResponse{}, fmt.Errorf("unexpected error: %w", tErr)
+	accessToken, taErr := s.auth.CreateAccessToken(reqUser)
+	if taErr != nil {
+		return LoginResponse{}, fmt.Errorf("unexpected error: %w", taErr)
 	}
-	refreshToken, tErr := s.auth.CreateRefreshToken(reqUser)
-	if tErr != nil {
-		return LoginResponse{}, fmt.Errorf("unexpected error: %w", tErr)
+	refreshToken, trErr := s.auth.CreateRefreshToken(reqUser)
+	if trErr != nil {
+		return LoginResponse{}, fmt.Errorf("unexpected error: %w", trErr)
 	}
 
-	return LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	loginedUser, lErr := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
+	if lErr != nil {
+		return LoginResponse{}, fmt.Errorf("unexpected error: %w", lErr)
+	}
+	return LoginResponse{UsrInfo: UserInfo{
+		ID:          loginedUser.ID,
+		Name:        loginedUser.Name,
+		PhoneNumber: loginedUser.PhoneNumber,
+	},
+		Tokens: Tokens{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		},
+	}, nil
 }
 
 func (s Service) GetUserProfile(req UserProfileRequest) (UserProfileResponse, error) {

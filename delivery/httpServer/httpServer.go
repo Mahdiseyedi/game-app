@@ -16,6 +16,7 @@ func (s Server) Serve() {
 
 	userGroup.POST("/register", s.UserRegister)
 	userGroup.POST("/login", s.Login)
+	userGroup.GET("/profile", s.UserProfile)
 
 	e.GET("/health-check", s.healthCheckHandler)
 
