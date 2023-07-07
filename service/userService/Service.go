@@ -5,8 +5,12 @@ import (
 	"game-app/entity/user"
 	"game-app/pkg/hash"
 	"game-app/pkg/phoneNumber"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v4"
 	"time"
+)
+
+const (
+	JwtSignKey = "jwt_secret"
 )
 
 type Repository interface {
@@ -96,7 +100,7 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, fmt.Errorf("...Service: Login failed!...")
 	}
 
-	jwtToken, tErr := createToken(reqUser.ID, s.signKey)
+	jwtToken, tErr := CreateToken(reqUser.ID, s.signKey)
 	if tErr != nil {
 		return LoginResponse{}, fmt.Errorf("unexpected error: %w", tErr)
 	}
@@ -156,7 +160,6 @@ func (s Service) PasswordServiceValidator(req RegisterRequest) (bool, error) {
 	return true, nil
 }
 
-//------------------------------------------------------------------------------------------
 type Claims struct {
 	RegisteredClaims jwt.RegisteredClaims
 	UserID           uint
@@ -166,7 +169,7 @@ func (c Claims) Valid() error {
 	return nil
 }
 
-func createToken(userID uint, signKey string) (string, error) {
+func CreateToken(userID uint, signKey string) (string, error) {
 	// create a signer for rsa 256
 	// TODO - replace with rsa 256 RS256 - https://github.com/golang-jwt/jwt/blob/main/http_example_test.go
 

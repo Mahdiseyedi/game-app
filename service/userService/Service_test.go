@@ -9,10 +9,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-const (
-	JwtSignKey = "jwt_secret"
-)
-
 // MockRepository is a mock implementation of the Repository interface
 type MockRepository struct {
 	mock.Mock
