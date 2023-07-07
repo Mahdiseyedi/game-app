@@ -4,51 +4,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"game-app/repository/mysql"
+	"game-app/service/authService"
 	"game-app/service/userService"
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 const (
-	JwtSignKey = "jwt_secret"
+	JwtSignKey           = "jwt_secret"
+	AccessTokenSubject   = "at"
+	RefreshTokenSubject  = "rt"
+	AccessTokenDuration  = time.Hour * 24
+	RefreshTokenDuration = time.Hour * 24 * 7
 )
 
 func main() {
 
 	http.HandleFunc("/healthcheck", healthCheckHandler)
 	http.HandleFunc("/users/register", UserRegisterHandler)
-
-	//TODO - implementing GetUserProfile handler
 	http.HandleFunc("/users/profile", UserGetProfileHandler)
-
-	//TODO - implementing Login handler
 	http.HandleFunc("/users/login", UserLoginHandler)
 
 	log.Println("server is listening on port 8088...")
 	http.ListenAndServe(":8080", nil)
-}
-
-func test_Register_By_Service() {
-	sqlTest := mysql.New()
-	rep := userService.Repository(sqlTest)
-
-	var req userService.UserProfileRequest
-
-	req.UserID = 7
-
-	//srv.RegisterUser(user.User{
-	//	ID:          0,
-	//	Name:        "mahdi",
-	//	PhoneNumber: "0912454545",
-	//})
-
-	srv := userService.New(rep, JwtSignKey)
-	resp, qErr := srv.GetUserProfile(req)
-
-	fmt.Println(resp)
-	fmt.Println(qErr)
-
 }
 
 func UserRegisterHandler(writer http.ResponseWriter, req *http.Request) {
@@ -67,7 +47,9 @@ func UserRegisterHandler(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	mysqlrepo := mysql.New()
-	srv := userService.New(mysqlrepo, JwtSignKey)
+	authSrv := authService.New(JwtSignKey, AccessTokenSubject, RefreshTokenSubject,
+		AccessTokenDuration, RefreshTokenDuration)
+	srv := userService.New(mysqlrepo, authSrv)
 
 	res, rErr := srv.Register(rReq)
 	if rErr != nil {
@@ -79,39 +61,32 @@ func UserRegisterHandler(writer http.ResponseWriter, req *http.Request) {
 }
 func UserGetProfileHandler(writer http.ResponseWriter, req *http.Request) {
 
-	if req.Method != http.MethodPost {
+	if req.Method != http.MethodGet {
 		fmt.Fprintf(writer, `{"error":"Invalid Method!"}`)
 		return
 	}
+	authSrv := authService.New(JwtSignKey, AccessTokenSubject, RefreshTokenSubject,
+		AccessTokenDuration, RefreshTokenDuration)
 
-	var rReq userService.RegisterRequest
-	body, _ := io.ReadAll(req.Body)
-	err := json.Unmarshal(body, &rReq)
+	authToken := req.Header.Get("Authorization")
+	claims, err := authSrv.VerifyToken(authToken)
 	if err != nil {
-		fmt.Fprintf(writer, `{"error":"invalid json format..."}`)
+		fmt.Fprintf(writer, `{"error":"Authentication Failed, %s"}`, err)
 		return
 	}
 
 	mysqlrepo := mysql.New()
-	srv := userService.New(mysqlrepo, JwtSignKey)
 
-	res, rErr := srv.Register(rReq)
+	srv := userService.New(mysqlrepo, authSrv)
+	res, rErr := srv.GetUserProfile(userService.UserProfileRequest{UserID: claims.UserID})
 	if rErr != nil {
 		fmt.Fprintf(writer, `{"error":"%s"}`, rErr)
 		return
 	}
 
-	fmt.Fprintf(writer, `{"your user id":"%d"}`, res.User.ID)
+	fmt.Fprintf(writer, `{"user profile":"%s"}`, res.Name)
 }
 func UserLoginHandler(writer http.ResponseWriter, req *http.Request) {
-
-	r, e := userService.CreateToken(12, JwtSignKey)
-	if e != nil {
-		fmt.Fprintf(writer, `{"error": %s `, e)
-		return
-	}
-	fmt.Println(r)
-
 	if req.Method != http.MethodPost {
 		fmt.Fprintf(writer, `{"error":"Invalid Method!"}`)
 		return
@@ -126,7 +101,9 @@ func UserLoginHandler(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	mysqlrepo := mysql.New()
-	srv := userService.New(mysqlrepo, JwtSignKey)
+	authSrv := authService.New(JwtSignKey, AccessTokenSubject, RefreshTokenSubject,
+		AccessTokenDuration, RefreshTokenDuration)
+	srv := userService.New(mysqlrepo, authSrv)
 
 	res, rErr := srv.Login(lReq)
 	if rErr != nil {
@@ -142,7 +119,6 @@ func UserLoginHandler(writer http.ResponseWriter, req *http.Request) {
 
 	writer.Write(loginResult)
 }
-
 func healthCheckHandler(writer http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(writer, `{"message": "everything is good!"}`)
 }
