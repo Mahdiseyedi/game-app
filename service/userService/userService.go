@@ -31,7 +31,9 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	User user.User
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 type LoginRequest struct {
@@ -86,7 +88,9 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	}
 
 	return RegisterResponse{
-		User: createdUser,
+		ID:          createdUser.ID,
+		Name:        createdUser.Name,
+		PhoneNumber: createdUser.PhoneNumber,
 	}, nil
 }
 

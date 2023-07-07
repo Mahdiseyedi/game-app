@@ -6,7 +6,7 @@ import (
 	"game-app/entity/user"
 )
 
-func (d *DB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
+func (d *MySQLDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	row := d.db.QueryRow(`select * from users where phone_number=?`, phoneNumber)
 	_, err := ScanUser(row)
 	if err == sql.ErrNoRows {
@@ -18,10 +18,10 @@ func (d *DB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	return false, err
 }
 
-func (d *DB) RegisterUser(u user.User) (user.User, error) {
+func (d *MySQLDB) RegisterUser(u user.User) (user.User, error) {
 	res, err := d.db.Exec(`insert into users(name, phone_number,password) values(?,?,?)`, u.Name, u.PhoneNumber, u.Password)
 	if err != nil {
-		return user.User{}, fmt.Errorf("cant inseret into DB, %w", err)
+		return user.User{}, fmt.Errorf("cant inseret into MySQLDB, %w", err)
 	}
 
 	id, _ := res.LastInsertId()
@@ -30,7 +30,7 @@ func (d *DB) RegisterUser(u user.User) (user.User, error) {
 	return u, nil
 }
 
-func (d *DB) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
+func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
 
 	row := d.db.QueryRow(`select * from users where phone_number =?`, phoneNumber)
 	u, err := ScanUser(row)
@@ -42,7 +42,7 @@ func (d *DB) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
 	return u, nil
 }
 
-func (d *DB) GetUserByID(userID uint) (user.User, error) {
+func (d *MySQLDB) GetUserByID(userID uint) (user.User, error) {
 	row := d.db.QueryRow(`select * from users where id=?`, userID)
 	u, err := ScanUser(row)
 

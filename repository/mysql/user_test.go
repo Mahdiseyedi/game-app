@@ -17,8 +17,8 @@ func TestIsPhoneNumberUnique(t *testing.T) {
 	}
 	defer mockDB.Close()
 
-	// Create a DB object with the mock database object
-	db := &DB{db: mockDB}
+	// Create a MySQLDB object with the mock database object
+	db := &MySQLDB{db: mockDB}
 
 	// Define some test cases with inputs and expected outputs
 	testCases := []struct {
@@ -61,8 +61,8 @@ func TestRegisterUser(t *testing.T) {
 	}
 	defer mockDB.Close()
 
-	// Create a DB object with the mock database object
-	db := &DB{db: mockDB}
+	// Create a MySQLDB object with the mock database object
+	db := &MySQLDB{db: mockDB}
 
 	// Define some test cases with inputs and expected outputs
 	testCases := []struct {
@@ -91,7 +91,7 @@ func TestRegisterUser(t *testing.T) {
 				Password:    "hashed_password",
 			},
 			expected: user.User{},
-			err:      errors.New("cant inseret into DB, ...some thing went wrong, ..."),
+			err:      errors.New("cant inseret into MySQLDB, ...some thing went wrong, ..."),
 		},
 	}
 
@@ -131,8 +131,8 @@ func TestGetUserByPhoneNumber(t *testing.T) {
 	}
 	defer mockDB.Close()
 
-	// Create a DB object with the mock database object
-	db := &DB{db: mockDB}
+	// Create a MySQLDB object with the mock database object
+	db := &MySQLDB{db: mockDB}
 
 	// Define some test cases with inputs and expected outputs
 	testCases := []struct {

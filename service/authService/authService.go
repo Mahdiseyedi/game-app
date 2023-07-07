@@ -7,41 +7,38 @@ import (
 	"time"
 )
 
+type Config struct {
+	SignKey               string
+	AccessExpirationTime  time.Duration
+	RefreshExpirationTime time.Duration
+	AccessSubject         string
+	RefreshSubject        string
+}
+
 type Service struct {
-	signKey               string
-	accessExpirationTime  time.Duration
-	refreshExpirationTime time.Duration
-	accessSubject         string
-	refreshSubject        string
+	config Config
 }
 
 type AuthParser interface {
 	VerifyToken(bearerToken string) (*Claims, error)
 }
 
-func New(signkey, accessSubject, refreshSubject string,
-	accessExpirationTime, refreshExpirationTime time.Duration) Service {
-	return Service{
-		signKey:               signkey,
-		accessExpirationTime:  accessExpirationTime,
-		refreshExpirationTime: refreshExpirationTime,
-		accessSubject:         accessSubject,
-		refreshSubject:        refreshSubject,
-	}
+func New(config Config) Service {
+	return Service{config: config}
 }
 
 func (s Service) CreateAccessToken(user user.User) (string, error) {
-	return s.CreateToken(user.ID, s.accessSubject, s.accessExpirationTime)
+	return s.CreateToken(user.ID, s.config.AccessSubject, s.config.AccessExpirationTime)
 }
 
 func (s Service) CreateRefreshToken(user user.User) (string, error) {
-	return s.CreateToken(user.ID, s.refreshSubject, s.refreshExpirationTime)
+	return s.CreateToken(user.ID, s.config.RefreshSubject, s.config.RefreshExpirationTime)
 }
 
 func (s Service) VerifyToken(bearerToken string) (*Claims, error) {
 	bearerToken = strings.Replace(bearerToken, "Bearer ", "", 1)
 	token, err := jwt.ParseWithClaims(bearerToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.signKey), nil
+		return []byte(s.config.SignKey), nil
 	})
 	if err != nil {
 		return nil, err
@@ -67,7 +64,7 @@ func (s Service) CreateToken(userID uint, subject string, expiredDuration time.D
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := accessToken.SignedString([]byte(s.signKey))
+	tokenString, err := accessToken.SignedString([]byte(s.config.SignKey))
 	if err != nil {
 		return "", err
 	}

@@ -8,13 +8,23 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type DB struct {
-	db *sql.DB
+type Config struct {
+	Username string
+	Password string
+	Port     int
+	Host     string
+	DbName   string
 }
 
-func New() *DB {
+type MySQLDB struct {
+	Config Config
+	db     *sql.DB
+}
 
-	db, err := sql.Open("mysql", "gameapp:gameappt0lk2o20@(localhost:3308)/gameapp_db")
+func New(config Config) *MySQLDB {
+
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@(%s:%d)/%s",
+		config.Username, config.Password, config.Host, config.Port, config.DbName))
 	if err != nil {
 		panic(fmt.Errorf("cant open database, %v", err))
 	}
@@ -23,5 +33,5 @@ func New() *DB {
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 
-	return &DB{db}
+	return &MySQLDB{Config: config, db: db}
 }
