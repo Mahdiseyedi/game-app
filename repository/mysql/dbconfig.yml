@@ -1,0 +1,5 @@
+gameapp_db:
+  dialect: mysql
+  datasource: gameapp:gameappt0lk2o20@tcp(127.0.0.1:3308)/gameapp_db?parseTime=true
+  dir: migrations
+  table: migrations

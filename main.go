@@ -3,6 +3,7 @@ package main
 import (
 	"game-app/config"
 	"game-app/delivery/httpServer"
+	"game-app/repository/migrator"
 	"game-app/repository/mysql"
 	"game-app/service/authService"
 	"game-app/service/userService"
@@ -35,6 +36,10 @@ func main() {
 			DbName:   "gameapp_db",
 		},
 	}
+
+	mgr := migrator.New(cfg.Mysql)
+	//TODO - add command for migrations
+	mgr.Up()
 
 	authSvc, userSvc := SetupServices(cfg)
 	server := httpServer.New(cfg, authSvc, userSvc)

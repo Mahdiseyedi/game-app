@@ -108,7 +108,7 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 	reqUser, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
-		return LoginResponse{}, err
+		//return LoginResponse{}, richerror.New(err, "userService.Login")
 	}
 
 	if hash.GetMd5Hash(req.Password) != reqUser.Password {

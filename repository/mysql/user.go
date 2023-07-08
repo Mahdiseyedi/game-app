@@ -56,6 +56,5 @@ func ScanUser(row *sql.Row) (user.User, error) {
 	var createdAt []uint8
 	u := user.User{}
 	err := row.Scan(&u.ID, &u.Name, &u.PhoneNumber, &createdAt, &u.Password)
-
 	return u, err
 }

@@ -16,6 +16,5 @@ services:
       MYSQL_USER: gameapp
       MYSQL_PASSWORD: gameappt0lk2o20
 
-
 volumes:
   dbdata:
