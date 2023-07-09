@@ -1,7 +1,9 @@
 package httpServer
 
 import (
+	"fmt"
 	"game-app/config"
+	"game-app/pkg/httpmsg"
 	"game-app/service/authService"
 	"game-app/service/userService"
 	"github.com/labstack/echo/v4"
@@ -43,10 +45,13 @@ func (s Server) Login(c echo.Context) error {
 	var req userService.LoginRequest
 
 	if err := c.Bind(&req); err != nil {
+		fmt.Println("Bind")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
+
 	resp, err := s.userSvc.Login(req)
 	if err != nil {
+		fmt.Println("delivery error")
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -63,7 +68,8 @@ func (s Server) UserProfile(c echo.Context) error {
 
 	resp, err := s.userSvc.GetUserProfile(userService.UserProfileRequest{UserID: claims.UserID})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		msg, code := httpmsg.Error(err)
+		return echo.NewHTTPError(code, msg)
 	}
 
 	return c.JSON(http.StatusOK, resp)

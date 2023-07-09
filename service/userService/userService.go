@@ -2,15 +2,15 @@ package userService
 
 import (
 	"fmt"
+	"game-app/dto"
 	"game-app/entity/user"
 	"game-app/pkg/hash"
-	"game-app/pkg/phoneNumber"
+	"game-app/pkg/richerror"
 )
 
 type Repository interface {
-	IsPhoneNumberUnique(phoneNumber string) (bool, error)
 	RegisterUser(u user.User) (user.User, error)
-	GetUserByPhoneNumber(phoneNumber string) (user.User, error)
+	GetUserByPhoneNumber(phoneNumber string) (user.User, bool, error)
 	GetUserByID(userID uint) (user.User, error)
 }
 
@@ -22,12 +22,6 @@ type AuthGenerator interface {
 type Service struct {
 	auth AuthGenerator
 	repo Repository
-}
-
-type RegisterRequest struct {
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
-	Password    string `json:"password"`
 }
 
 type UserInfo struct {
@@ -51,8 +45,8 @@ type Tokens struct {
 }
 
 type LoginResponse struct {
-	UsrInfo UserInfo `json:"user_info"`
-	Tokens  Tokens   `json:"tokens"`
+	User   UserInfo `json:"user_info"`
+	Tokens Tokens   `json:"tokens"`
 }
 
 type UserProfileRequest struct {
@@ -67,19 +61,8 @@ func New(repo Repository, auth AuthGenerator) Service {
 	return Service{repo: repo, auth: auth}
 }
 
-func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
+func (s Service) Register(req dto.RegisterRequest) (RegisterResponse, error) {
 	//TODO - implementing otp verification for phoneNumber
-	if res, err := s.PhoneNumberServiceValidator(req); !res {
-		return RegisterResponse{}, err
-	}
-
-	if res, err := s.NameServiceValidator(req); !res {
-		return RegisterResponse{}, err
-	}
-
-	if res, err := s.PasswordServiceValidator(req); !res {
-		return RegisterResponse{}, err
-	}
 
 	//TODO - replace md5 with bcrypt
 	hashedPassword := hash.GetMd5Hash(req.Password)
@@ -106,9 +89,16 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 }
 
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
-	reqUser, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
+	const op = "UserService.Login"
+
+	reqUser, exist, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
-		//return LoginResponse{}, richerror.New(err, "userService.Login")
+		return LoginResponse{},
+			richerror.New(op).WithErr(err).WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
+	}
+
+	if !exist {
+		return LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
 	if hash.GetMd5Hash(req.Password) != reqUser.Password {
@@ -124,14 +114,10 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, fmt.Errorf("unexpected error: %w", trErr)
 	}
 
-	loginedUser, lErr := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
-	if lErr != nil {
-		return LoginResponse{}, fmt.Errorf("unexpected error: %w", lErr)
-	}
-	return LoginResponse{UsrInfo: UserInfo{
-		ID:          loginedUser.ID,
-		Name:        loginedUser.Name,
-		PhoneNumber: loginedUser.PhoneNumber,
+	return LoginResponse{User: UserInfo{
+		ID:          reqUser.ID,
+		Name:        reqUser.Name,
+		PhoneNumber: reqUser.PhoneNumber,
 	},
 		Tokens: Tokens{
 			AccessToken:  accessToken,
@@ -141,45 +127,18 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 }
 
 func (s Service) GetUserProfile(req UserProfileRequest) (UserProfileResponse, error) {
+	const op = "userService.GetUserProfile"
+
 	userProfile, err := s.repo.GetUserByID(req.UserID)
 	if err != nil {
-		return UserProfileResponse{}, err
+		return UserProfileResponse{},
+			richerror.New(op).WithErr(err).WithMeta(map[string]interface{}{"req": req})
 	}
 
 	return UserProfileResponse{Name: userProfile.Name}, nil
 }
 
-func (s Service) PhoneNumberServiceValidator(req RegisterRequest) (bool, error) {
-	if !phoneNumber.IsValid(req.PhoneNumber) {
-		return false, fmt.Errorf("...Validator: this number is not valid...")
-	}
-
-	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); !isUnique {
-		if err != nil {
-			return false, err
-		}
-
-		if !isUnique {
-			return false, fmt.Errorf("...Validator: phone number is not unique...")
-		}
-	}
-	return true, nil
-}
-
-func (s Service) NameServiceValidator(req RegisterRequest) (bool, error) {
-	if len(req.Name) <= 3 {
-		return false, fmt.Errorf("...Validator: name lenght should grater than 3")
-	}
-
-	//this if statement just for keep validator structure regular
-	if req.Name == "userName" {
-		return false, fmt.Errorf("...Validator: username cant be \"userName\"")
-	}
-
-	return true, nil
-}
-
-func (s Service) PasswordServiceValidator(req RegisterRequest) (bool, error) {
+func (s Service) PasswordServiceValidator(req dto.RegisterRequest) (bool, error) {
 	//TODO - check the password with regex
 	if len(req.Password) < 8 {
 		return false, fmt.Errorf("...Validator: Password len most grater than 8...")

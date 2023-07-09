@@ -4,15 +4,20 @@ import (
 	"database/sql"
 	"fmt"
 	"game-app/entity/user"
+	"game-app/pkg/errmsg"
+	"game-app/pkg/richerror"
 )
 
 func (d *MySQLDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
+	const op = "mysql.IsPhoneNumberUnique"
 	row := d.db.QueryRow(`select * from users where phone_number=?`, phoneNumber)
 	_, err := ScanUser(row)
 	if err == sql.ErrNoRows {
-		return true, err
+		return true, nil
 	} else if err != nil {
-		return false, fmt.Errorf("...some thing went wrong, %w", err)
+		return false, richerror.New(op).WithErr(err).
+			WithMessage(errmsg.ErrorMsgCantScanQueryResult).
+			WithKind(richerror.KindUnexpected)
 	}
 
 	return false, err
@@ -30,25 +35,38 @@ func (d *MySQLDB) RegisterUser(u user.User) (user.User, error) {
 	return u, nil
 }
 
-func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
+func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (user.User, bool, error) {
+	const op = "mysql.GetUserByPhoneNumber"
 
 	row := d.db.QueryRow(`select * from users where phone_number =?`, phoneNumber)
 	u, err := ScanUser(row)
 
 	if err != nil {
-		return user.User{}, fmt.Errorf("...no user find with that phone number, %w", err)
+		if err == sql.ErrNoRows {
+			return user.User{}, false, nil
+		}
+		return user.User{}, false, richerror.New(op).WithErr(err).
+			WithMessage(errmsg.ErrorMsgCantScanQueryResult).WithKind(richerror.KindUnexpected)
 	}
 
-	return u, nil
+	return u, true, nil
 }
 
 func (d *MySQLDB) GetUserByID(userID uint) (user.User, error) {
+	const op = "mysql.GetUserByID"
 	row := d.db.QueryRow(`select * from users where id=?`, userID)
 	u, err := ScanUser(row)
 
 	if err != nil {
-		return user.User{}, fmt.Errorf("...no user find with that ID, %w", err)
+		if err == sql.ErrNoRows {
+			return user.User{}, richerror.New(op).WithErr(err).
+				WithMessage(errmsg.ErrorMsgNotFound).WithKind(richerror.KindNotFound)
+		}
+		return user.User{}, richerror.New(op).WithErr(err).
+			WithMessage(errmsg.ErrorMsgCantScanQueryResult).WithKind(richerror.KindUnexpected)
+
 	}
+
 	return u, nil
 }
 
