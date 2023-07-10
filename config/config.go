@@ -2,7 +2,7 @@ package config
 
 import (
 	MySql "game-app/repository/mysql"
-	"game-app/service/authService"
+	"game-app/service/authservice"
 )
 
 type HTTPServer struct {
@@ -10,7 +10,7 @@ type HTTPServer struct {
 }
 
 type Config struct {
-	HttpConfig HTTPServer
-	Auth       authService.Config
+	HTTPServer HTTPServer
+	Auth       authservice.Config
 	Mysql      MySql.Config
 }

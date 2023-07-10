@@ -1,4 +1,4 @@
-package userService
+package userservice
 
 import (
 	"fmt"
@@ -24,16 +24,6 @@ type Service struct {
 	repo Repository
 }
 
-type UserInfo struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
-}
-
-type RegisterResponse struct {
-	UsrInfo UserInfo `json:"user_info"`
-}
-
 type LoginRequest struct {
 	PhoneNumber string `json:"phone_number"`
 	Password    string `json:"password"`
@@ -45,8 +35,8 @@ type Tokens struct {
 }
 
 type LoginResponse struct {
-	User   UserInfo `json:"user_info"`
-	Tokens Tokens   `json:"tokens"`
+	User   dto.UserInfo `json:"user_info"`
+	Tokens Tokens       `json:"tokens"`
 }
 
 type UserProfileRequest struct {
@@ -61,35 +51,31 @@ func New(repo Repository, auth AuthGenerator) Service {
 	return Service{repo: repo, auth: auth}
 }
 
-func (s Service) Register(req dto.RegisterRequest) (RegisterResponse, error) {
+func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error) {
 	//TODO - implementing otp verification for phoneNumber
 
 	//TODO - replace md5 with bcrypt
-	hashedPassword := hash.GetMd5Hash(req.Password)
-
 	user := user.User{
 		ID:          0,
 		Name:        req.Name,
 		PhoneNumber: req.PhoneNumber,
-		Password:    hashedPassword,
+		Password:    hash.GetMd5Hash(req.Password),
 	}
 
 	createdUser, err := s.repo.RegisterUser(user)
 	if err != nil {
-		return RegisterResponse{}, fmt.Errorf("...Repository: Register repository Error %w", err)
+		return dto.RegisterResponse{}, fmt.Errorf("...Repository: Register repository Error %w", err)
 	}
 
-	return RegisterResponse{
-		UsrInfo: UserInfo{
-			ID:          createdUser.ID,
-			Name:        createdUser.Name,
-			PhoneNumber: createdUser.PhoneNumber,
-		},
-	}, nil
+	return dto.RegisterResponse{User: dto.UserInfo{
+		ID:          createdUser.ID,
+		Name:        createdUser.Name,
+		PhoneNumber: createdUser.PhoneNumber,
+	}}, nil
 }
 
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
-	const op = "UserService.Login"
+	const op = "Userservice.userLogin"
 
 	reqUser, exist, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
@@ -102,7 +88,7 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 	}
 
 	if hash.GetMd5Hash(req.Password) != reqUser.Password {
-		return LoginResponse{}, fmt.Errorf("...Service: Login failed!...")
+		return LoginResponse{}, fmt.Errorf("...Service: userLogin failed!...")
 	}
 
 	accessToken, taErr := s.auth.CreateAccessToken(reqUser)
@@ -114,7 +100,7 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, fmt.Errorf("unexpected error: %w", trErr)
 	}
 
-	return LoginResponse{User: UserInfo{
+	return LoginResponse{User: dto.UserInfo{
 		ID:          reqUser.ID,
 		Name:        reqUser.Name,
 		PhoneNumber: reqUser.PhoneNumber,
@@ -126,8 +112,8 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 	}, nil
 }
 
-func (s Service) GetUserProfile(req UserProfileRequest) (UserProfileResponse, error) {
-	const op = "userService.GetUserProfile"
+func (s Service) Profile(req UserProfileRequest) (UserProfileResponse, error) {
+	const op = "userService.Profile"
 
 	userProfile, err := s.repo.GetUserByID(req.UserID)
 	if err != nil {
@@ -138,14 +124,14 @@ func (s Service) GetUserProfile(req UserProfileRequest) (UserProfileResponse, er
 	return UserProfileResponse{Name: userProfile.Name}, nil
 }
 
-func (s Service) PasswordServiceValidator(req dto.RegisterRequest) (bool, error) {
+func (s Service) PasswordServiceValIDator(req dto.RegisterRequest) (bool, error) {
 	//TODO - check the password with regex
 	if len(req.Password) < 8 {
-		return false, fmt.Errorf("...Validator: Password len most grater than 8...")
+		return false, fmt.Errorf("...ValIDator: Password len most grater than 8...")
 	}
 
 	if req.Password == "password" {
-		return false, fmt.Errorf("...Validator: so simple...")
+		return false, fmt.Errorf("...ValIDator: so simple...")
 	}
 
 	return true, nil

@@ -1,4 +1,4 @@
-package userService
+package userservice
 
 //
 //import (
@@ -280,4 +280,4 @@ package userService
 //}
 //
 ////-----------------------------------------------------------------------------------------------------
-////Login worked well
+////userLogin worked well

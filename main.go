@@ -1,12 +1,13 @@
 package main
 
 import (
+	"game-app/Validator/uservalidator"
 	"game-app/config"
-	"game-app/delivery/httpServer"
+	"game-app/delivery/http_server"
 	"game-app/repository/migrator"
 	"game-app/repository/mysql"
-	"game-app/service/authService"
-	"game-app/service/userService"
+	"game-app/service/authservice"
+	"game-app/service/userservice"
 	"time"
 )
 
@@ -20,8 +21,8 @@ const (
 
 func main() {
 	cfg := config.Config{
-		HttpConfig: config.HTTPServer{Port: 8088},
-		Auth: authService.Config{
+		HTTPServer: config.HTTPServer{Port: 8088},
+		Auth: authservice.Config{
 			SignKey:               JwtSignKey,
 			AccessExpirationTime:  AccessTokenDuration,
 			RefreshExpirationTime: RefreshTokenDuration,
@@ -41,16 +42,17 @@ func main() {
 	//TODO - add command for migrations
 	mgr.Up()
 
-	authSvc, userSvc := SetupServices(cfg)
-	server := httpServer.New(cfg, authSvc, userSvc)
+	authSvc, userSvc, userValidator := SetupServices(cfg)
+	server := http_server.New(cfg, authSvc, userSvc, userValidator)
 
 	server.Serve()
 }
 
-func SetupServices(cfg config.Config) (authService.Service, userService.Service) {
-	authSvc := authService.New(cfg.Auth)
+func SetupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator) {
+	authSvc := authservice.New(cfg.Auth)
 	MysqlRepo := mysql.New(cfg.Mysql)
-	userSvc := userService.New(MysqlRepo, authSvc)
+	userSvc := userservice.New(MysqlRepo, authSvc)
+	uV := uservalidator.New(MysqlRepo)
 
-	return authSvc, userSvc
+	return authSvc, userSvc, uV
 }
