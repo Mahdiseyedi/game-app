@@ -3,7 +3,7 @@ package main
 import (
 	"game-app/Validator/uservalidator"
 	"game-app/config"
-	"game-app/delivery/http_server"
+	"game-app/delivery/httpserver"
 	"game-app/repository/migrator"
 	"game-app/repository/mysql"
 	"game-app/service/authservice"
@@ -43,7 +43,7 @@ func main() {
 	mgr.Up()
 
 	authSvc, userSvc, userValidator := SetupServices(cfg)
-	server := http_server.New(cfg, authSvc, userSvc, userValidator)
+	server := httpserver.New(cfg, authSvc, userSvc, userValidator)
 
 	server.Serve()
 }

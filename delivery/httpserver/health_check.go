@@ -1,4 +1,4 @@
-package http_server
+package httpserver
 
 import (
 	"github.com/labstack/echo/v4"

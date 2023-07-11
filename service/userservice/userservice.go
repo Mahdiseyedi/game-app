@@ -35,7 +35,7 @@ type Tokens struct {
 }
 
 type LoginResponse struct {
-	User   dto.UserInfo `json:"user_info"`
+	User   dto.UserInfo `json:"user"`
 	Tokens Tokens       `json:"tokens"`
 }
 
@@ -124,15 +124,15 @@ func (s Service) Profile(req UserProfileRequest) (UserProfileResponse, error) {
 	return UserProfileResponse{Name: userProfile.Name}, nil
 }
 
-func (s Service) PasswordServiceValIDator(req dto.RegisterRequest) (bool, error) {
-	//TODO - check the password with regex
-	if len(req.Password) < 8 {
-		return false, fmt.Errorf("...ValIDator: Password len most grater than 8...")
-	}
-
-	if req.Password == "password" {
-		return false, fmt.Errorf("...ValIDator: so simple...")
-	}
-
-	return true, nil
-}
+//func (s Service) PasswordServiceValIDator(req dto.RegisterRequest) (bool, error) {
+//	//TODO - check the password with regex
+//	if len(req.Password) < 8 {
+//		return false, fmt.Errorf("...ValIDator: Password len most grater than 8...")
+//	}
+//
+//	if req.Password == "password" {
+//		return false, fmt.Errorf("...ValIDator: so simple...")
+//	}
+//
+//	return true, nil
+//}

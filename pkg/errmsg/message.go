@@ -1,6 +1,7 @@
 package errmsg
 
 const (
+	ErrorMsgInvalidInput           = "invalid input"
 	ErrorMsgNotFound               = "record not found"
 	ErrorMsgCantScanQueryResult    = "can't scan query result"
 	ErrorMsgSomethingWentWrong     = "something went wrong"

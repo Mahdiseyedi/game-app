@@ -1,4 +1,4 @@
-package http_server
+package httpserver
 
 import (
 	"game-app/dto"
@@ -14,6 +14,14 @@ func (s Server) userRegister(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
+	if err, fieldErrors := s.userValidator.ValidateRegisterRequest(req); err != nil {
+		msg, code := httpmsg.Error(err)
+		return c.JSON(code, echo.Map{
+			"message": msg,
+			"errors":  fieldErrors,
+		})
+	}
+
 	resp, err := s.userSvc.Register(req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
