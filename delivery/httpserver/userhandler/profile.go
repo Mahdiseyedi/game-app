@@ -1,8 +1,8 @@
 package userhandler
 
 import (
+	"game-app/config"
 	"game-app/param"
-	"game-app/pkg/constant"
 	"game-app/pkg/httpmsg"
 	"game-app/service/authservice"
 	"github.com/labstack/echo/v4"
@@ -10,7 +10,7 @@ import (
 )
 
 func getClaims(c echo.Context) *authservice.Claims {
-	return c.Get(constant.AuthMiddlewareContextKey).(*authservice.Claims)
+	return c.Get(config.AuthMiddlewareContextKey).(*authservice.Claims)
 }
 
 func (h Handler) userProfile(c echo.Context) error {

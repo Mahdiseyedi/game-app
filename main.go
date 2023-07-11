@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"game-app/Validator/uservalidator"
 	"game-app/config"
 	"game-app/delivery/httpserver"
@@ -20,6 +21,9 @@ const (
 )
 
 func main() {
+	cfgz := config.Load("config.yml")
+	fmt.Printf("cfgz: +%v\n", cfgz)
+
 	cfg := config.Config{
 		HTTPServer: config.HTTPServer{Port: 8088},
 		Auth: authservice.Config{
