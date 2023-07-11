@@ -96,7 +96,7 @@ package mysql
 //		},
 //	}
 //
-//	// Loop over the test cases and check the output of RegisterUser method
+//	// Loop over the test cases and check the output of Register method
 //	for _, tc := range testCases {
 //		// Expect an exec to be executed with the mock database object and return a fake result or an error
 //		if tc.err == nil {
@@ -105,17 +105,17 @@ package mysql
 //			mock.ExpectExec(`insert into users\(name, phone_number,password\) values\(\?,\?,\?\)`).WithArgs(tc.input.Name, tc.input.PhoneNumber, tc.input.Password).WillReturnError(tc.err)
 //		}
 //
-//		// Call the RegisterUser method and get the output
-//		output, err := db.RegisterUser(tc.input)
+//		// Call the Register method and get the output
+//		output, err := db.Register(tc.input)
 //
 //		// Check if the output matches the expected value
 //		if !reflect.DeepEqual(output, tc.expected) {
-//			t.Errorf("RegisterUser(%v) = %v; want %v", tc.input, output, tc.expected)
+//			t.Errorf("Register(%v) = %v; want %v", tc.input, output, tc.expected)
 //		}
 //
 //		// Check if the error matches the expected value
 //		if !errors.Is(err, tc.err) {
-//			t.Errorf("RegisterUser(%v) error = %v; want %v", tc.input, err, tc.err)
+//			t.Errorf("Register(%v) error = %v; want %v", tc.input, err, tc.err)
 //		}
 //
 //		if err := mock.ExpectationsWereMet(); err != nil {

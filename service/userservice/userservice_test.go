@@ -21,8 +21,8 @@ package userservice
 //	return args.Bool(0), args.Error(1)
 //}
 //
-//// RegisterUser is a mock method that returns the arguments passed to it
-//func (m *MockRepository) RegisterUser(u user.User) (user.User, error) {
+//// Register is a mock method that returns the arguments passed to it
+//func (m *MockRepository) Register(u user.User) (user.User, error) {
 //	args := m.Called(u)
 //	return args.Get(0).(user.User), args.Error(1)
 //}
@@ -261,7 +261,7 @@ package userservice
 //		t.Run(tc.name, func(t *testing.T) {
 //			if tc.err == nil {
 //				mockRepo.On("IsPhoneNumberUnique", tc.request.PhoneNumber).Return(true, nil)
-//				mockRepo.On("RegisterUser", mock.AnythingOfType("user.User")).Return(tc.result.User, nil)
+//				mockRepo.On("Register", mock.AnythingOfType("user.User")).Return(tc.result.User, nil)
 //			} else if tc.err.Error() == "...Validator: this number is not valid..." {
 //				mockRepo.On("IsPhoneNumberUnique", tc.request.PhoneNumber).Return(false, errors.New("phone number is invalid"))
 //			} else if tc.err.Error() == "...Validator: phone number is not unique..." {

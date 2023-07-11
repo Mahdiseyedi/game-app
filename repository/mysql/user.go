@@ -23,7 +23,7 @@ func (d *MySQLDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	return false, err
 }
 
-func (d *MySQLDB) RegisterUser(u user.User) (user.User, error) {
+func (d *MySQLDB) Register(u user.User) (user.User, error) {
 	res, err := d.db.Exec(`insert into users(name, phone_number,password) values(?,?,?)`, u.Name, u.PhoneNumber, u.Password)
 	if err != nil {
 		return user.User{}, fmt.Errorf("cant inseret into MySQLDB, %w", err)
