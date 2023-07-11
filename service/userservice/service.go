@@ -6,7 +6,7 @@ import (
 
 type Repository interface {
 	Register(u user.User) (user.User, error)
-	GetUserByPhoneNumber(phoneNumber string) (user.User, bool, error)
+	GetUserByPhoneNumber(phoneNumber string) (user.User, error)
 	GetUserByID(userID uint) (user.User, error)
 }
 

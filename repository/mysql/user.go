@@ -35,21 +35,22 @@ func (d *MySQLDB) Register(u user.User) (user.User, error) {
 	return u, nil
 }
 
-func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (user.User, bool, error) {
+func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (user.User, error) {
 	const op = "mysql.GetUserByPhoneNumber"
 
 	row := d.db.QueryRow(`select * from users where phone_number =?`, phoneNumber)
-	u, err := ScanUser(row)
+	usr, err := ScanUser(row)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return user.User{}, false, nil
+			return user.User{}, richerror.New(op).WithErr(err).
+				WithMessage(errmsg.ErrorMsgNotFound).WithKind(richerror.KindNotFound)
 		}
-		return user.User{}, false, richerror.New(op).WithErr(err).
+		return user.User{}, richerror.New(op).WithErr(err).
 			WithMessage(errmsg.ErrorMsgCantScanQueryResult).WithKind(richerror.KindUnexpected)
 	}
 
-	return u, true, nil
+	return usr, nil
 }
 
 func (d *MySQLDB) GetUserByID(userID uint) (user.User, error) {
