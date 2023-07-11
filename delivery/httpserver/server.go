@@ -20,7 +20,7 @@ func New(config config.Config, authSvc authservice.Service,
 	userSvc userservice.Service, userValidator uservalidator.Validator) Server {
 	return Server{
 		config:      config,
-		userHandler: userhandler.New(authSvc, userSvc, userValidator),
+		userHandler: userhandler.New(config.Auth, authSvc, userSvc, userValidator),
 	}
 }
 

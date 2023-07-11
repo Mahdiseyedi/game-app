@@ -2,14 +2,14 @@ package uservalidator
 
 import (
 	"fmt"
-	"game-app/dto"
+	"game-app/param"
 	"game-app/pkg/errmsg"
 	"game-app/pkg/richerror"
 	"github.com/go-ozzo/ozzo-validation/v4"
 	"regexp"
 )
 
-func (v Validator) ValidateRegisterRequest(req dto.RegisterRequest) (map[string]string, error) {
+func (v Validator) ValidateRegisterRequest(req param.RegisterRequest) (map[string]string, error) {
 	const op = "userValidator.ValidateRegisterRequest"
 
 	if err := validation.ValidateStruct(&req,

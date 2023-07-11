@@ -2,12 +2,12 @@ package userservice
 
 import (
 	"fmt"
-	"game-app/dto"
 	users "game-app/entity/user"
+	"game-app/param"
 	"game-app/pkg/hash"
 )
 
-func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error) {
+func (s Service) Register(req param.RegisterRequest) (param.RegisterResponse, error) {
 	//TODO - implementing otp verification for phoneNumber
 
 	//TODO - replace md5 with bcrypt
@@ -20,10 +20,10 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 
 	createdUser, err := s.repo.Register(user)
 	if err != nil {
-		return dto.RegisterResponse{}, fmt.Errorf("...Repository: Register repository Error %w", err)
+		return param.RegisterResponse{}, fmt.Errorf("...Repository: Register repository Error %w", err)
 	}
 
-	return dto.RegisterResponse{User: dto.UserInfo{
+	return param.RegisterResponse{User: param.UserInfo{
 		ID:          createdUser.ID,
 		Name:        createdUser.Name,
 		PhoneNumber: createdUser.PhoneNumber,

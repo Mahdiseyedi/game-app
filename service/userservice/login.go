@@ -2,42 +2,42 @@ package userservice
 
 import (
 	"fmt"
-	"game-app/dto"
+	"game-app/param"
 	"game-app/pkg/errmsg"
 	"game-app/pkg/hash"
 	"game-app/pkg/richerror"
 )
 
-func (s Service) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
+func (s Service) Login(req param.LoginRequest) (param.LoginResponse, error) {
 	const op = "userService.Login"
 
 	reqUser, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
-		return dto.LoginResponse{},
+		return param.LoginResponse{},
 			richerror.New(op).WithErr(err).WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
 	}
 
 	if hash.GetMd5Hash(req.Password) != reqUser.Password {
-		return dto.LoginResponse{},
+		return param.LoginResponse{},
 			richerror.New(op).WithErr(err).WithKind(richerror.KindForbidden).
 				WithMessage(errmsg.ErrorMsgWrongPassword)
 	}
 
 	accessToken, taErr := s.auth.CreateAccessToken(reqUser)
 	if taErr != nil {
-		return dto.LoginResponse{}, fmt.Errorf("unexpected error: %w", taErr)
+		return param.LoginResponse{}, fmt.Errorf("unexpected error: %w", taErr)
 	}
 	refreshToken, trErr := s.auth.CreateRefreshToken(reqUser)
 	if trErr != nil {
-		return dto.LoginResponse{}, fmt.Errorf("unexpected error: %w", trErr)
+		return param.LoginResponse{}, fmt.Errorf("unexpected error: %w", trErr)
 	}
 
-	return dto.LoginResponse{User: dto.UserInfo{
+	return param.LoginResponse{User: param.UserInfo{
 		ID:          reqUser.ID,
 		Name:        reqUser.Name,
 		PhoneNumber: reqUser.PhoneNumber,
 	},
-		Tokens: dto.Tokens{
+		Tokens: param.Tokens{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		},
