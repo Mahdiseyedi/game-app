@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"fmt"
+	"game-app/entity/role"
 	users "game-app/entity/user"
 	"game-app/param"
 	"game-app/pkg/hash"
@@ -16,6 +17,7 @@ func (s Service) Register(req param.RegisterRequest) (param.RegisterResponse, er
 		Name:        req.Name,
 		PhoneNumber: req.PhoneNumber,
 		Password:    hash.GetMd5Hash(req.Password),
+		Role:        role.UserRole,
 	}
 
 	createdUser, err := s.repo.Register(user)

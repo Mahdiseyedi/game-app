@@ -7,7 +7,11 @@ import (
 	"game-app/delivery/httpserver"
 	"game-app/repository/migrator"
 	"game-app/repository/mysql"
+	"game-app/repository/mysql/mysqlaccesscontrol"
+	"game-app/repository/mysql/mysqluser"
+	"game-app/service/authorizeservice"
 	"game-app/service/authservice"
+	"game-app/service/backofficeuserservice"
 	"game-app/service/userservice"
 	"time"
 )
@@ -21,9 +25,10 @@ const (
 )
 
 func main() {
-	cfgz := config.Load("config.yml")
-	fmt.Printf("cfgz: +%v\n", cfgz)
+	cfg2 := config.Load("config.yml")
+	fmt.Printf("cfg2: +%v\n", cfg2)
 
+	//TODO - merge cfg with cfg2
 	cfg := config.Config{
 		HTTPServer: config.HTTPServer{Port: 8088},
 		Auth: authservice.Config{
@@ -38,7 +43,7 @@ func main() {
 			Password: "gameappt0lk2o20",
 			Port:     3308,
 			Host:     "localhost",
-			DbName:   "gameapp_db",
+			DBName:   "gameapp_db",
 		},
 	}
 
@@ -46,17 +51,25 @@ func main() {
 	//TODO - add command for migrations
 	mgr.Up()
 
-	authSvc, userSvc, userValidator := SetupServices(cfg)
-	server := httpserver.New(cfg, authSvc, userSvc, userValidator)
+	authSvc, userSvc, userValidator, backofficeSvc, authorizationSvc := SetupServices(cfg)
+	server := httpserver.New(cfg, authSvc, userSvc, userValidator,
+		backofficeSvc, authorizationSvc)
 
 	server.Serve()
 }
 
-func SetupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator) {
+func SetupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator,
+	backofficeuserservice.Service, authorizeservice.Service) {
 	authSvc := authservice.New(cfg.Auth)
 	MysqlRepo := mysql.New(cfg.Mysql)
-	userSvc := userservice.New(MysqlRepo, authSvc)
-	uV := uservalidator.New(MysqlRepo)
+	userMysql := mysqluser.New(MysqlRepo)
+	userSvc := userservice.New(userMysql, authSvc)
+	backofficeSvc := backofficeuserservice.New()
 
-	return authSvc, userSvc, uV
+	aclMysql := mysqlaccesscontrol.New(MysqlRepo)
+	authorizeSvc := authorizeservice.New(aclMysql)
+
+	uV := uservalidator.New(userMysql)
+
+	return authSvc, userSvc, uV, backofficeSvc, authorizeSvc
 }

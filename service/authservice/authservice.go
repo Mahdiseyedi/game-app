@@ -1,6 +1,7 @@
 package authservice
 
 import (
+	"game-app/entity/role"
 	"game-app/entity/user"
 	"github.com/golang-jwt/jwt/v4"
 	"strings"
@@ -28,11 +29,11 @@ func New(config Config) Service {
 }
 
 func (s Service) CreateAccessToken(user user.User) (string, error) {
-	return s.CreateToken(user.ID, s.config.AccessSubject, s.config.AccessExpirationTime)
+	return s.CreateToken(user.ID, user.Role, s.config.AccessSubject, s.config.AccessExpirationTime)
 }
 
 func (s Service) CreateRefreshToken(user user.User) (string, error) {
-	return s.CreateToken(user.ID, s.config.RefreshSubject, s.config.RefreshExpirationTime)
+	return s.CreateToken(user.ID, user.Role, s.config.RefreshSubject, s.config.RefreshExpirationTime)
 }
 
 func (s Service) VerifyToken(bearerToken string) (*Claims, error) {
@@ -51,16 +52,14 @@ func (s Service) VerifyToken(bearerToken string) (*Claims, error) {
 	}
 }
 
-func (s Service) CreateToken(userID uint, subject string, expiredDuration time.Duration) (string, error) {
-	// create a signer for rsa 256
-	// TODO - replace with rsa 256 RS256 - https://github.com/golang-jwt/jwt/blob/main/http_example_test.go
-
+func (s Service) CreateToken(userID uint, role role.Role, subject string, expiredDuration time.Duration) (string, error) {
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   subject,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiredDuration)),
 		},
 		UserID: userID,
+		Role:   role,
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

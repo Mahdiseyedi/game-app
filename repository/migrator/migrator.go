@@ -29,7 +29,7 @@ func New(dbConfig mysql.Config) Migrator {
 
 func (m Migrator) Up() {
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@(%s:%d)/%s?parseTime=true",
-		m.dbConfig.Username, m.dbConfig.Password, m.dbConfig.Host, m.dbConfig.Port, m.dbConfig.DbName))
+		m.dbConfig.Username, m.dbConfig.Password, m.dbConfig.Host, m.dbConfig.Port, m.dbConfig.DBName))
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func (m Migrator) Up() {
 
 func (m Migrator) Down() {
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@(%s:%d)/%s?parseTime=true",
-		m.dbConfig.Username, m.dbConfig.Password, m.dbConfig.Host, m.dbConfig.Port, m.dbConfig.DbName))
+		m.dbConfig.Username, m.dbConfig.Password, m.dbConfig.Host, m.dbConfig.Port, m.dbConfig.DBName))
 	if err != nil {
 		panic(err)
 	}

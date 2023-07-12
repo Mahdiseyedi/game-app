@@ -14,4 +14,5 @@ const (
 	ErrorMsgUserNameRequired      = "Username Required"
 	ErrorMsgPasswordRequired      = "password Required"
 	ErrorMsgPasswordRegexValidate = "password length should be 10 at least"
+	ErrorMsgUserNotAllowed        = "user not allowed"
 )
