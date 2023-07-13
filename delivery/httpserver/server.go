@@ -39,6 +39,7 @@ func (s Server) Serve() {
 	e.GET("/health-check", s.healthCheck)
 
 	s.userHandler.SetRoutes(e)
+	s.backofficeHandler.SetRoutes(e)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", s.config.HTTPServer.Port)))
 }

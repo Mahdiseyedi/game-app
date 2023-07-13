@@ -3,6 +3,7 @@ package authorizeservice
 import (
 	"game-app/entity/permission"
 	"game-app/entity/role"
+	"game-app/pkg/errmsg"
 	"game-app/pkg/richerror"
 )
 
@@ -18,12 +19,15 @@ func New(repo Repository) Service {
 	return Service{repo: repo}
 }
 
-func (s Service) CheckAccess(userID uint, role role.Role, permissions ...permission.PermissionTitle) (bool, error) {
+func (s Service) CheckAccess(userID uint, role role.Role,
+	permissions ...permission.PermissionTitle) (bool, error) {
 	const op = "authorizeservice.CheckAccess"
 
 	PermissionTitle, err := s.repo.GetUserPermissionTitles(userID, role)
 	if err != nil {
-		return false, richerror.New(op).WithErr(err)
+		return false, richerror.New(op).WithErr(err).
+			WithKind(richerror.KindForbidden).
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong)
 	}
 
 	for _, pt := range PermissionTitle {

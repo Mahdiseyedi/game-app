@@ -1,7 +1,6 @@
 package uservalidator
 
 import (
-	"fmt"
 	"game-app/param"
 	"game-app/pkg/errmsg"
 	"game-app/pkg/richerror"
@@ -39,10 +38,14 @@ func (v Validator) ValidateLoginRequest(req param.LoginRequest) (map[string]stri
 }
 
 func (v Validator) doesPhoneNumberExist(value interface{}) error {
+	const op = "userValidator.doesPhoneNumberExist"
+
 	phoneNumber := value.(string)
 	_, err := v.repo.GetUserByPhoneNumber(phoneNumber)
 	if err != nil {
-		return fmt.Errorf(errmsg.ErrorMsgNotFound)
+		return richerror.New(op).WithErr(err).
+			WithKind(richerror.KindNotFound).
+			WithMessage(errmsg.ErrorMsgNotFound)
 	}
 
 	return nil

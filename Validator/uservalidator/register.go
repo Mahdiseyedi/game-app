@@ -1,7 +1,6 @@
 package uservalidator
 
 import (
-	"fmt"
 	"game-app/param"
 	"game-app/pkg/errmsg"
 	"game-app/pkg/richerror"
@@ -46,15 +45,21 @@ func (v Validator) ValidateRegisterRequest(req param.RegisterRequest) (map[strin
 }
 
 func (v Validator) checkPhoneNumberUniqueness(value interface{}) error {
+	const op = "userValidator.checkPhoneNumberUniqueness"
+
 	phoneNumber := value.(string)
 
 	if isUnique, err := v.repo.IsPhoneNumberUnique(phoneNumber); err != nil || !isUnique {
 		if err != nil {
-			return err
+			return richerror.New(op).WithErr(err).
+				WithKind(richerror.KindNotAcceptable).
+				WithMessage(errmsg.ErrorMsgPhoneNumberIsNotValid)
 		}
 
 		if !isUnique {
-			return fmt.Errorf(errmsg.ErrorMsgPhoneNumberIsNotUnique)
+			return richerror.New(op).WithErr(err).
+				WithKind(richerror.KindNotAcceptable).
+				WithMessage(errmsg.ErrorMsgPhoneNumberIsNotUnique)
 		}
 	}
 

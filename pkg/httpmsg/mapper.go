@@ -33,6 +33,8 @@ func mapKindToHTTPStatusCode(kind richerror.Kind) int {
 		return http.StatusForbidden
 	case richerror.KindUnexpected:
 		return http.StatusInternalServerError
+	case richerror.KindNotAcceptable:
+		return http.StatusNotAcceptable
 	default:
 		return http.StatusBadRequest
 	}

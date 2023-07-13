@@ -121,10 +121,13 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 }
 
 func scanAccessControl(scanner mysql.Scanner) (accesscontrol.AccessControl, error) {
+	const op = "mysql.scanAccessControl"
 	var createdAt time.Time
 	var acl accesscontrol.AccessControl
 
 	err := scanner.Scan(&acl.ID, &acl.ActorID, &acl.ActorType, &acl.PermissionID, &createdAt)
 
-	return acl, err
+	return acl, richerror.New(op).
+		WithErr(err).WithKind(richerror.KindUnexpected).
+		WithMessage(errmsg.ErrorMsgCantScanQueryResult)
 }

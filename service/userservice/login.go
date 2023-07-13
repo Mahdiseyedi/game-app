@@ -1,7 +1,6 @@
 package userservice
 
 import (
-	"fmt"
 	"game-app/param"
 	"game-app/pkg/errmsg"
 	"game-app/pkg/hash"
@@ -25,11 +24,16 @@ func (s Service) Login(req param.LoginRequest) (param.LoginResponse, error) {
 
 	accessToken, taErr := s.auth.CreateAccessToken(reqUser)
 	if taErr != nil {
-		return param.LoginResponse{}, fmt.Errorf("unexpected error: %w", taErr)
+		return param.LoginResponse{}, richerror.New(op).WithErr(err).
+			WithKind(richerror.KindUnexpected).
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong)
 	}
+
 	refreshToken, trErr := s.auth.CreateRefreshToken(reqUser)
 	if trErr != nil {
-		return param.LoginResponse{}, fmt.Errorf("unexpected error: %w", trErr)
+		return param.LoginResponse{}, richerror.New(op).WithErr(err).
+			WithKind(richerror.KindUnexpected).
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong)
 	}
 
 	return param.LoginResponse{User: param.UserInfo{

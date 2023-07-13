@@ -2,7 +2,6 @@ package mysqluser
 
 import (
 	"database/sql"
-	"fmt"
 	"game-app/entity/role"
 	"game-app/entity/user"
 	"game-app/pkg/errmsg"
@@ -27,10 +26,13 @@ func (d *DB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 }
 
 func (d *DB) Register(u user.User) (user.User, error) {
+	const op = "mysql.Register"
+
 	res, err := d.conn.Conn().Exec(`insert into users(name, phone_number, password, role) values(?,?,?,?)`,
 		u.Name, u.PhoneNumber, u.Password, u.Role.String())
 	if err != nil {
-		return user.User{}, fmt.Errorf("cant inseret into MySQLDB, %w", err)
+		return user.User{}, richerror.New(op).WithErr(err).
+			WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgCantInsertUserIntoDatabase)
 	}
 
 	id, _ := res.LastInsertId()
@@ -75,6 +77,7 @@ func (d *DB) GetUserByID(userID uint) (user.User, error) {
 }
 
 func ScanUser(scanner mysql.Scanner) (user.User, error) {
+	const op = "mysql.ScanUser"
 	var createdAt []uint8
 	var user user.User
 	var roleStr string
@@ -84,5 +87,7 @@ func ScanUser(scanner mysql.Scanner) (user.User, error) {
 
 	user.Role = role.MapToRoleEntity(roleStr)
 
-	return user, err
+	return user, richerror.New(op).WithErr(err).
+		WithKind(richerror.KindNotFound).
+		WithMessage(errmsg.ErrorMsgCantScanQueryResult)
 }
