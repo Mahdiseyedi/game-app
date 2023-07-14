@@ -1,7 +1,6 @@
 package mysqlaccesscontrol
 
 import (
-	"fmt"
 	"game-app/entity/accesscontrol"
 	"game-app/entity/permission"
 	"game-app/entity/role"
@@ -19,9 +18,6 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 	rows, err := d.conn.Conn().Query(`select * from access_controls where actor_type = ? and actor_id = ?`,
 		accesscontrol.RoleActorType, role)
 
-	fmt.Println("GetUserPermissionTitles.roleAcl: ", roleACL)
-	fmt.Println("GetUserPermissionTitles err: ", err)
-
 	if err != nil {
 		return nil, richerror.New(op).WithErr(err).
 			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
@@ -32,8 +28,6 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 
 	for rows.Next() {
 		acl, err := scanAccessControl(rows)
-		fmt.Println("GetUserPermissionTitles.rows.next: ", acl)
-		fmt.Println("GetUserPermissionTitles.rows.err: ", err)
 		if err != nil {
 			return nil, richerror.New(op).WithErr(err).
 				WithMessage(errmsg.ErrorMsgSomethingWentWrong).
@@ -43,10 +37,7 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 		roleACL = append(roleACL, acl)
 	}
 
-	fmt.Println("GetUserPermissionTitles final role acl: ", roleACL)
-
 	if err := rows.Err(); err != nil {
-		fmt.Println("GetUserPermissionTitles.rows.err: ", err)
 		return nil, richerror.New(op).WithErr(err).
 			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
 			WithKind(richerror.KindUnexpected)
@@ -56,9 +47,6 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 
 	userRows, err := d.conn.Conn().Query(`select * from access_controls where actor_type = ? and actor_id = ?`,
 		accesscontrol.UserActorType, userID)
-
-	fmt.Println("GetUserPermissionTitles.userRows: ", userRows)
-	fmt.Println("GetUserPermissionTitles.userRows err: ", err)
 
 	if err != nil {
 		return nil, richerror.New(op).WithErr(err).
@@ -70,8 +58,6 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 
 	for userRows.Next() {
 		acl, err := scanAccessControl(userRows)
-		fmt.Println("GetUserPermissionTitles.userRows.Next.acl: ", acl)
-		fmt.Println("GetUserPermissionTitles.userRows.Next.err: ", err)
 		if err != nil {
 			return nil, richerror.New(op).WithErr(err).
 				WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
@@ -81,10 +67,7 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 
 	}
 
-	fmt.Println("GetUserPermissionTitles.userRows.Next.final user ACL: ", userACL)
-
 	if err := userRows.Err(); err != nil {
-		fmt.Println("GetUserPermissionTitles.userRows.err after final user acl: ", err)
 
 		return nil, richerror.New(op).WithErr(err).
 			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
@@ -95,19 +78,14 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 	permissionIDs := make([]uint, 0)
 
 	for _, r := range roleACL {
-		fmt.Println("GetUserPermissionTitles.roleAcls.r: ", r)
 		if !slice.DoesExist(permissionIDs, r.PermissionID) {
 			permissionIDs = append(permissionIDs, r.PermissionID)
 		}
 	}
 
-	fmt.Println("GetUserPermissionTitles.permissionIDs: ", permissionIDs)
-
 	if len(permissionIDs) == 0 {
 		return nil, nil
 	}
-
-	fmt.Println("this line mean GetUserPermissionTitles.permissionIDs not ==0")
 
 	//select * from permissions where id in (?,?,?,?...)
 	args := make([]any, len(permissionIDs))
@@ -115,14 +93,11 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 	for i, id := range permissionIDs {
 		args[i] = id
 	}
-	fmt.Println("GetUserPermissionTitles.args: ", args)
 	// its error pron area if we had less than one permission id !!!
 	query := "select * from permissions where id in (?" + strings.Repeat(",?", len(permissionIDs)-1) +
 		")"
 
 	pRows, err := d.conn.Conn().Query(query, args...)
-	fmt.Println("GetUserPermissionTitles.pRows: ", pRows)
-	fmt.Println("GetUserPermissionTitles.pRows.err: ", err)
 
 	if err != nil {
 		return nil, richerror.New(op).WithErr(err).
@@ -136,9 +111,6 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 	for pRows.Next() {
 		permission, err := scanPermission(pRows)
 
-		fmt.Println("GetUserPermissionTitles.permission: ", permission)
-		fmt.Println("GetUserPermissionTitles.permission.err: ", err)
-
 		if err != nil {
 			return nil, richerror.New(op).WithErr(err).
 				WithMessage(errmsg.ErrorMsgSomethingWentWrong).
@@ -147,15 +119,14 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 
 		permissionTitles = append(permissionTitles, permission.Title)
 	}
-	fmt.Println("GetUserPermissionTitles.permissionTitles: ", permissionTitles)
 
 	if err := pRows.Err(); err != nil {
-		fmt.Println("this line mean GetUserPermissionTitles.pRow.err is not nil: ", err)
+
 		return nil, richerror.New(op).WithErr(err).
 			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
 			WithKind(richerror.KindUnexpected)
 	}
-	fmt.Println("final GetUserPermissionTitles.permissionTitles!: ", permissionTitles)
+
 	return permissionTitles, nil
 }
 
@@ -164,9 +135,6 @@ func scanAccessControl(scanner mysql.Scanner) (accesscontrol.AccessControl, erro
 	var acl accesscontrol.AccessControl
 
 	err := scanner.Scan(&acl.ID, &acl.ActorID, &acl.ActorType, &acl.PermissionID, &createdAt)
-
-	fmt.Println("scanAccessControl :", acl)
-	fmt.Println("scanAccessControl :", err)
 
 	return acl, err
 }

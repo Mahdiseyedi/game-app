@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"game-app/entity/permission"
 	"game-app/pkg/claim"
 	"game-app/pkg/errmsg"
@@ -17,20 +16,17 @@ func AccessCheck(service authorizationservice.Service, permissions ...permission
 			isAllowed, err := service.CheckAccess(claims.UserID, claims.Role, permissions...)
 
 			if err != nil {
-				fmt.Println("access control err", isAllowed, err)
 				return c.JSON(http.StatusInternalServerError, echo.Map{
 					"message": errmsg.ErrorMsgSomethingWentWrong,
 				})
 			}
 
 			if !isAllowed {
-				fmt.Println("access control !isAllowed", isAllowed, err)
 				return c.JSON(http.StatusForbidden, echo.Map{
 					"message": errmsg.ErrorMsgUserNotAllowed,
 				})
 			}
 
-			fmt.Println("access control isAllowed", isAllowed, err)
 			return next(c)
 		}
 	}

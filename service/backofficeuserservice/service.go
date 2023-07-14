@@ -1,7 +1,6 @@
 package backofficeuserservice
 
 import (
-	"fmt"
 	"game-app/entity/role"
 	"game-app/entity/user"
 )
@@ -23,7 +22,6 @@ func (s Service) ListAllUsers() ([]user.User, error) {
 		Password:    "fake",
 		Role:        role.AdminRole,
 	})
-	fmt.Println("backofficeuserservice.ListAllUsers: ", list)
 
 	return list, nil
 }

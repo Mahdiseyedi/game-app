@@ -2,7 +2,6 @@ package mysqluser
 
 import (
 	"database/sql"
-	"fmt"
 	"game-app/entity/role"
 	"game-app/entity/user"
 	"game-app/pkg/errmsg"
@@ -86,9 +85,6 @@ func ScanUser(scanner mysql.Scanner) (user.User, error) {
 		&createdAt, &user.Password, &roleStr)
 
 	user.Role = role.MapToRoleEntity(roleStr)
-
-	fmt.Println("user.scanUSer: ", user)
-	fmt.Println("user.scaUser err: ", err)
 
 	return user, err
 }
