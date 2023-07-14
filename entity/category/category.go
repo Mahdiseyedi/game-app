@@ -15,8 +15,3 @@ func (c Category) IsValid() bool {
 
 	return false
 }
-
-func CategoryList() []Category {
-	return []Category{FootballCategory, HistoryCategory}
-
-}

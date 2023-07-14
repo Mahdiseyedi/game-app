@@ -1,13 +1,14 @@
 package game
 
 import (
+	"game-app/entity/category"
 	"game-app/entity/question"
 	"time"
 )
 
 type Game struct {
 	ID           uint
-	CategoryID   uint
+	Category     category.Category
 	QuestionsIDs []uint
 	PlayerIDs    []uint
 	startTime    time.Time
@@ -26,4 +27,8 @@ type PlayerAnswer struct {
 	PlayerID   uint
 	QuestionID uint
 	Choice     question.PossibleAnswerChoice
+}
+
+func Data() {
+
 }

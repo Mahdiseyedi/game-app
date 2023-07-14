@@ -1,8 +1,6 @@
 package config
 
 import (
-	"game-app/pkg/errmsg"
-	"game-app/pkg/richerror"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/env"
@@ -11,8 +9,7 @@ import (
 	"strings"
 )
 
-func Load(configPath string) *Config {
-	const op = "config.Load"
+func Load(configPath string) Config {
 	var k = koanf.New(".")
 
 	k.Load(confmap.Provider(defaultConfig, "."), nil)
@@ -26,10 +23,8 @@ func Load(configPath string) *Config {
 
 	var cfg Config
 	if err := k.Unmarshal("", &cfg); err != nil {
-		panic(richerror.New(op).
-			WithErr(err).WithKind(richerror.KindUnexpected).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong))
+		panic(err)
 	}
 
-	return &cfg
+	return cfg
 }
