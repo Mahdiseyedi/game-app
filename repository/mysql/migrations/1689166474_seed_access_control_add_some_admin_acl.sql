@@ -9,4 +9,4 @@ INSERT INTO `access_controls` (`actor_type`,`actor_id`,`permission_id`)
 VALUES ('role',2,2);
 
 -- +migrate Down
-DELETE FROM `permissions` WHERE id IN(1,2);
+DELETE FROM `permissions` WHERE id IN (1,2);

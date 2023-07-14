@@ -6,7 +6,7 @@ import (
 	"game-app/config"
 	"game-app/delivery/httpserver/backofficeuserhandler"
 	"game-app/delivery/httpserver/userhandler"
-	"game-app/service/authorizeservice"
+	"game-app/service/authorizationservice"
 	"game-app/service/authservice"
 	"game-app/service/backofficeuserservice"
 	"game-app/service/userservice"
@@ -22,7 +22,7 @@ type Server struct {
 
 func New(config config.Config, authSvc authservice.Service,
 	userSvc userservice.Service, userValidator uservalidator.Validator,
-	backofficeUserSvc backofficeuserservice.Service, authorizationSvc authorizeservice.Service) Server {
+	backofficeUserSvc backofficeuserservice.Service, authorizationSvc authorizationservice.Service) Server {
 	return Server{
 		config:            config,
 		userHandler:       userhandler.New(config.Auth, authSvc, userSvc, userValidator),

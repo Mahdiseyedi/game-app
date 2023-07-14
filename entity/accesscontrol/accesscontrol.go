@@ -7,7 +7,7 @@ type AccessControl struct {
 	PermissionID uint
 }
 
-type ActorType uint
+type ActorType string
 
 const (
 	RoleActorType = "role"

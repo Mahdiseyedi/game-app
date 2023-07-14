@@ -2,6 +2,7 @@ package mysqluser
 
 import (
 	"database/sql"
+	"fmt"
 	"game-app/entity/role"
 	"game-app/entity/user"
 	"game-app/pkg/errmsg"
@@ -11,7 +12,7 @@ import (
 
 func (d *DB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	const op = "mysql.IsPhoneNumberUnique"
-	row := d.conn.Conn().QueryRow(`select * from users where phone_number=?`, phoneNumber)
+	row := d.conn.Conn().QueryRow(`select * from users where phone_number = ?`, phoneNumber)
 
 	_, err := ScanUser(row)
 	if err == sql.ErrNoRows {
@@ -77,7 +78,6 @@ func (d *DB) GetUserByID(userID uint) (user.User, error) {
 }
 
 func ScanUser(scanner mysql.Scanner) (user.User, error) {
-	const op = "mysql.ScanUser"
 	var createdAt []uint8
 	var user user.User
 	var roleStr string
@@ -87,7 +87,8 @@ func ScanUser(scanner mysql.Scanner) (user.User, error) {
 
 	user.Role = role.MapToRoleEntity(roleStr)
 
-	return user, richerror.New(op).WithErr(err).
-		WithKind(richerror.KindNotFound).
-		WithMessage(errmsg.ErrorMsgCantScanQueryResult)
+	fmt.Println("user.scanUSer: ", user)
+	fmt.Println("user.scaUser err: ", err)
+
+	return user, err
 }

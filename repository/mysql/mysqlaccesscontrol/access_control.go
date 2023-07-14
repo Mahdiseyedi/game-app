@@ -1,6 +1,7 @@
 package mysqlaccesscontrol
 
 import (
+	"fmt"
 	"game-app/entity/accesscontrol"
 	"game-app/entity/permission"
 	"game-app/entity/role"
@@ -9,7 +10,6 @@ import (
 	"game-app/pkg/slice"
 	"game-app/repository/mysql"
 	"strings"
-	"time"
 )
 
 func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.PermissionTitle, error) {
@@ -19,42 +19,59 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 	rows, err := d.conn.Conn().Query(`select * from access_controls where actor_type = ? and actor_id = ?`,
 		accesscontrol.RoleActorType, role)
 
+	fmt.Println("GetUserPermissionTitles.roleAcl: ", roleACL)
+	fmt.Println("GetUserPermissionTitles err: ", err)
+
 	if err != nil {
 		return nil, richerror.New(op).WithErr(err).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+			WithKind(richerror.KindUnexpected)
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		acl, err := scanAccessControl(rows)
-
+		fmt.Println("GetUserPermissionTitles.rows.next: ", acl)
+		fmt.Println("GetUserPermissionTitles.rows.err: ", err)
 		if err != nil {
 			return nil, richerror.New(op).WithErr(err).
-				WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+				WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+				WithKind(richerror.KindUnexpected)
 		}
 
 		roleACL = append(roleACL, acl)
 	}
 
+	fmt.Println("GetUserPermissionTitles final role acl: ", roleACL)
+
 	if err := rows.Err(); err != nil {
+		fmt.Println("GetUserPermissionTitles.rows.err: ", err)
 		return nil, richerror.New(op).WithErr(err).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+			WithKind(richerror.KindUnexpected)
 	}
 
 	userACL := make([]accesscontrol.AccessControl, 0)
 
-	userRows, err := d.conn.Conn().Query(`select * from access_controls where actor_type = ? actor_id = ?`,
+	userRows, err := d.conn.Conn().Query(`select * from access_controls where actor_type = ? and actor_id = ?`,
 		accesscontrol.UserActorType, userID)
+
+	fmt.Println("GetUserPermissionTitles.userRows: ", userRows)
+	fmt.Println("GetUserPermissionTitles.userRows err: ", err)
+
 	if err != nil {
 		return nil, richerror.New(op).WithErr(err).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+			WithKind(richerror.KindUnexpected)
 	}
 
 	defer userRows.Close()
 
 	for userRows.Next() {
 		acl, err := scanAccessControl(userRows)
+		fmt.Println("GetUserPermissionTitles.userRows.Next.acl: ", acl)
+		fmt.Println("GetUserPermissionTitles.userRows.Next.err: ", err)
 		if err != nil {
 			return nil, richerror.New(op).WithErr(err).
 				WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
@@ -64,23 +81,33 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 
 	}
 
+	fmt.Println("GetUserPermissionTitles.userRows.Next.final user ACL: ", userACL)
+
 	if err := userRows.Err(); err != nil {
+		fmt.Println("GetUserPermissionTitles.userRows.err after final user acl: ", err)
+
 		return nil, richerror.New(op).WithErr(err).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+			WithKind(richerror.KindUnexpected)
 	}
 
 	//merge ACLs by permission id
 	permissionIDs := make([]uint, 0)
 
 	for _, r := range roleACL {
-		if slice.DoesExist(permissionIDs, r.PermissionID) {
+		fmt.Println("GetUserPermissionTitles.roleAcls.r: ", r)
+		if !slice.DoesExist(permissionIDs, r.PermissionID) {
 			permissionIDs = append(permissionIDs, r.PermissionID)
 		}
 	}
 
+	fmt.Println("GetUserPermissionTitles.permissionIDs: ", permissionIDs)
+
 	if len(permissionIDs) == 0 {
 		return nil, nil
 	}
+
+	fmt.Println("this line mean GetUserPermissionTitles.permissionIDs not ==0")
 
 	//select * from permissions where id in (?,?,?,?...)
 	args := make([]any, len(permissionIDs))
@@ -88,15 +115,19 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 	for i, id := range permissionIDs {
 		args[i] = id
 	}
-
+	fmt.Println("GetUserPermissionTitles.args: ", args)
 	// its error pron area if we had less than one permission id !!!
 	query := "select * from permissions where id in (?" + strings.Repeat(",?", len(permissionIDs)-1) +
 		")"
 
 	pRows, err := d.conn.Conn().Query(query, args...)
+	fmt.Println("GetUserPermissionTitles.pRows: ", pRows)
+	fmt.Println("GetUserPermissionTitles.pRows.err: ", err)
+
 	if err != nil {
 		return nil, richerror.New(op).WithErr(err).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+			WithKind(richerror.KindUnexpected)
 	}
 	defer pRows.Close()
 
@@ -104,30 +135,38 @@ func (d *DB) GetUserPermissionTitles(userID uint, role role.Role) ([]permission.
 
 	for pRows.Next() {
 		permission, err := scanPermission(pRows)
+
+		fmt.Println("GetUserPermissionTitles.permission: ", permission)
+		fmt.Println("GetUserPermissionTitles.permission.err: ", err)
+
 		if err != nil {
 			return nil, richerror.New(op).WithErr(err).
-				WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+				WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+				WithKind(richerror.KindUnexpected)
 		}
 
 		permissionTitles = append(permissionTitles, permission.Title)
 	}
+	fmt.Println("GetUserPermissionTitles.permissionTitles: ", permissionTitles)
 
 	if err := pRows.Err(); err != nil {
+		fmt.Println("this line mean GetUserPermissionTitles.pRow.err is not nil: ", err)
 		return nil, richerror.New(op).WithErr(err).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+			WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+			WithKind(richerror.KindUnexpected)
 	}
+	fmt.Println("final GetUserPermissionTitles.permissionTitles!: ", permissionTitles)
 	return permissionTitles, nil
-
 }
 
 func scanAccessControl(scanner mysql.Scanner) (accesscontrol.AccessControl, error) {
-	const op = "mysql.scanAccessControl"
-	var createdAt time.Time
+	var createdAt []uint8
 	var acl accesscontrol.AccessControl
 
 	err := scanner.Scan(&acl.ID, &acl.ActorID, &acl.ActorType, &acl.PermissionID, &createdAt)
 
-	return acl, richerror.New(op).
-		WithErr(err).WithKind(richerror.KindUnexpected).
-		WithMessage(errmsg.ErrorMsgCantScanQueryResult)
+	fmt.Println("scanAccessControl :", acl)
+	fmt.Println("scanAccessControl :", err)
+
+	return acl, err
 }
