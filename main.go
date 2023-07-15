@@ -13,11 +13,13 @@ import (
 	"game-app/repository/mysql/mysqlaccesscontrol"
 	"game-app/repository/mysql/mysqluser"
 	"game-app/repository/redis/redismatching"
+	"game-app/repository/redis/redispresence"
 	"game-app/scheduler"
 	"game-app/service/authorizationservice"
 	"game-app/service/authservice"
 	"game-app/service/backofficeuserservice"
 	"game-app/service/matchingservice"
+	"game-app/service/presenceservice"
 	"game-app/service/userservice"
 	"os"
 	"os/signal"
@@ -38,10 +40,10 @@ func main() {
 	mgr.Up()
 
 	authSvc, userSvc, userValidator, backofficeSvc, authorizationSvc,
-		matchingSvc, matchingV := SetupServices(cfg)
+		matchingSvc, matchingV, presencSvc := SetupServices(cfg)
 
 	server := httpserver.New(cfg, authSvc, userSvc, userValidator,
-		backofficeSvc, authorizationSvc, matchingSvc, matchingV)
+		backofficeSvc, authorizationSvc, matchingSvc, matchingV, presencSvc)
 
 	go func() {
 		server.Serve()
@@ -50,7 +52,7 @@ func main() {
 	done := make(chan bool)
 	var wg sync.WaitGroup
 	go func() {
-		sch := scheduler.New(matchingSvc)
+		sch := scheduler.New(cfg.Scheduler, matchingSvc)
 
 		wg.Add(1)
 		sch.Start(done, &wg)
@@ -81,6 +83,7 @@ func SetupServices(cfg config.Config) (
 	authservice.Service, userservice.Service, uservalidator.Validator,
 	backofficeuserservice.Service, authorizationservice.Service,
 	matchingservice.Service, matchingvalidator.Validator,
+	presenceservice.Service,
 ) {
 	authSvc := authservice.New(cfg.Auth)
 	MysqlRepo := mysql.New(cfg.Mysql)
@@ -98,5 +101,9 @@ func SetupServices(cfg config.Config) (
 	matchingRepo := redismatching.New(redisAdapter)
 	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo)
 
-	return authSvc, userSvc, uV, backofficeUserSvc, authorizationSvc, matchingSvc, matchingV
+	presenceRepo := redispresence.New(redisAdapter)
+	presenceSvc := presenceservice.New(cfg.PresenceService, presenceRepo)
+
+	return authSvc, userSvc, uV, backofficeUserSvc,
+		authorizationSvc, matchingSvc, matchingV, presenceSvc
 }

@@ -12,6 +12,7 @@ import (
 	"game-app/service/authservice"
 	"game-app/service/backofficeuserservice"
 	"game-app/service/matchingservice"
+	"game-app/service/presenceservice"
 	"game-app/service/userservice"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -29,14 +30,15 @@ func New(config config.Config, authSvc authservice.Service, userSvc userservice.
 	userValidator uservalidator.Validator,
 	backofficeUserSvc backofficeuserservice.Service, authorizationSvc authorizationservice.Service,
 	matchingSvc matchingservice.Service,
-	matchingValidator matchingvalidator.Validator) Server {
+	matchingValidator matchingvalidator.Validator,
+	presenceSvc presenceservice.Service) Server {
 
 	return Server{
 		Router:            echo.New(),
 		config:            config,
-		userHandler:       userhandler.New(config.Auth, authSvc, userSvc, userValidator),
+		userHandler:       userhandler.New(config.Auth, authSvc, userSvc, userValidator, presenceSvc),
 		backofficeHandler: backofficeuserhandler.New(config.Auth, authSvc, backofficeUserSvc, authorizationSvc),
-		matchingHandler:   matchinghandler.New(config.Auth, authSvc, matchingSvc, matchingValidator),
+		matchingHandler:   matchinghandler.New(config.Auth, authSvc, matchingSvc, matchingValidator, presenceSvc),
 	}
 }
 

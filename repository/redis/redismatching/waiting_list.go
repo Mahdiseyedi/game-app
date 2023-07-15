@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"game-app/entity/category"
 	"game-app/pkg/richerror"
+	"game-app/pkg/timestamp"
 	"github.com/redis/go-redis/v9"
-	"time"
 )
 
 //TODO - add to config in use-case layer
@@ -18,7 +18,7 @@ func (d DB) AddToWaitingList(userID uint, category category.Category) error {
 	t, err := d.adapter.Client().
 		ZAdd(context.Background(),
 			fmt.Sprintf("%s:%s", WaitingListPrefix, category),
-			redis.Z{Score: float64(time.Now().UnixMicro()),
+			redis.Z{Score: float64(timestamp.Now()),
 				Member: fmt.Sprintf("%d", userID),
 			}).Result()
 
