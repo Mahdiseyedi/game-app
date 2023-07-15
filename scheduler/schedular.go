@@ -1,6 +1,8 @@
 package scheduler
 
 import (
+	"context"
+	"fmt"
 	"game-app/param"
 	"game-app/service/matchingservice"
 	"github.com/go-co-op/gocron"
@@ -42,5 +44,16 @@ func (s Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 }
 
 func (s Scheduler) MatchWaitedUsers() {
-	s.matchSvc.MatchWaitedUsers(param.MatchWaitedUsersRequest{})
+	ctx, cancel := context.WithTimeout(context.Background(),
+		2*time.Minute)
+	defer cancel()
+
+	//get lock(turn)
+	_, err := s.matchSvc.MatchWaitedUsers(ctx, param.MatchWaitedUsersRequest{})
+	if err != nil {
+		//TODO - logging err
+		//TODO - update metrics
+		fmt.Println("matchSvc.MatchwaitedUsers error: ", err)
+	}
+	//free lock(turn)
 }
