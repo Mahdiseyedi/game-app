@@ -99,10 +99,10 @@ func SetupServices(cfg config.Config) (
 	matchingV := matchingvalidator.New()
 	redisAdapter := redis.New(cfg.Redis)
 	matchingRepo := redismatching.New(redisAdapter)
-	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo, nil)
 
 	presenceRepo := redispresence.New(redisAdapter)
 	presenceSvc := presenceservice.New(cfg.PresenceService, presenceRepo)
+	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo, presenceSvc)
 
 	return authSvc, userSvc, uV, backofficeUserSvc,
 		authorizationSvc, matchingSvc, matchingV, presenceSvc
