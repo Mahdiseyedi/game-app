@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"game-app/Validator/matchingvalidator"
 	"game-app/Validator/uservalidator"
@@ -29,7 +30,7 @@ const (
 
 func main() {
 	cfg := config.Load("config.yml")
-	fmt.Printf("cfg: +%v\n", cfg)
+	fmt.Printf("cfg: %+v\n", cfg)
 
 	mgr := migrator.New(cfg.Mysql)
 	//TODO - add command for migrations
@@ -37,10 +38,11 @@ func main() {
 
 	authSvc, userSvc, userValidator, backofficeSvc, authorizationSvc,
 		matchingSvc, matchingV := SetupServices(cfg)
-	go func() {
-		server := httpserver.New(cfg, authSvc, userSvc, userValidator,
-			backofficeSvc, authorizationSvc, matchingSvc, matchingV)
 
+	server := httpserver.New(cfg, authSvc, userSvc, userValidator,
+		backofficeSvc, authorizationSvc, matchingSvc, matchingV)
+
+	go func() {
 		server.Serve()
 	}()
 
@@ -53,9 +55,20 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
+
+	ctx := context.Background()
+	ctxWithTimeout, cancel := context.WithTimeout(ctx,
+		cfg.Application.GracefulShutdownTimeout)
+	defer cancel()
+
+	if err := server.Router.Shutdown(ctxWithTimeout); err != nil {
+		fmt.Println("http server shutdown error: ", err)
+	}
+
 	fmt.Println("received interrupt signal, shutting down gracefully...")
 	done <- true
-	time.Sleep(5 * time.Second)
+	time.Sleep(cfg.Application.GracefulShutdownTimeout)
+	<-ctxWithTimeout.Done()
 }
 
 func SetupServices(cfg config.Config) (
