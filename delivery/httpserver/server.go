@@ -50,7 +50,7 @@ func (s Server) Serve() {
 	s.backofficeHandler.SetRoutes(e)
 	s.matchingHandler.SetRoute(e)
 
-	address := fmt.Sprintf("%d", s.config.HTTPServer.Port)
+	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)
 	e.Logger.Fatal(e.Start(address))
 }
