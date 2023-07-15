@@ -21,6 +21,7 @@ import (
 	"game-app/service/userservice"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
@@ -47,9 +48,12 @@ func main() {
 	}()
 
 	done := make(chan bool)
+	var wg sync.WaitGroup
 	go func() {
-		sch := scheduler.New()
-		sch.Start(done)
+		sch := scheduler.New(matchingSvc)
+
+		wg.Add(1)
+		sch.Start(done, &wg)
 	}()
 
 	quit := make(chan os.Signal, 1)
@@ -69,6 +73,8 @@ func main() {
 	done <- true
 	time.Sleep(cfg.Application.GracefulShutdownTimeout)
 	<-ctxWithTimeout.Done()
+
+	wg.Wait()
 }
 
 func SetupServices(cfg config.Config) (
