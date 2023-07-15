@@ -12,11 +12,15 @@ import (
 	"game-app/repository/mysql/mysqlaccesscontrol"
 	"game-app/repository/mysql/mysqluser"
 	"game-app/repository/redis/redismatching"
+	"game-app/scheduler"
 	"game-app/service/authorizationservice"
 	"game-app/service/authservice"
 	"game-app/service/backofficeuserservice"
 	"game-app/service/matchingservice"
 	"game-app/service/userservice"
+	"os"
+	"os/signal"
+	"time"
 )
 
 const (
@@ -33,10 +37,25 @@ func main() {
 
 	authSvc, userSvc, userValidator, backofficeSvc, authorizationSvc,
 		matchingSvc, matchingV := SetupServices(cfg)
-	server := httpserver.New(cfg, authSvc, userSvc, userValidator,
-		backofficeSvc, authorizationSvc, matchingSvc, matchingV)
+	go func() {
+		server := httpserver.New(cfg, authSvc, userSvc, userValidator,
+			backofficeSvc, authorizationSvc, matchingSvc, matchingV)
 
-	server.Serve()
+		server.Serve()
+	}()
+
+	done := make(chan bool)
+	go func() {
+		sch := scheduler.New()
+		sch.Start(done)
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	fmt.Println("received interrupt signal, shutting down gracefully...")
+	done <- true
+	time.Sleep(5 * time.Second)
 }
 
 func SetupServices(cfg config.Config) (
