@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"game-app/Validator/matchingvalidator"
 	"game-app/Validator/uservalidator"
+	presenceClient "game-app/adapter/presence"
 	"game-app/adapter/redis"
 	"game-app/config"
 	"game-app/delivery/httpserver"
@@ -21,6 +22,8 @@ import (
 	"game-app/service/matchingservice"
 	"game-app/service/presenceservice"
 	"game-app/service/userservice"
+	"google.golang.org/grpc"
+	_ "google.golang.org/grpc"
 	"os"
 	"os/signal"
 	"sync"
@@ -102,7 +105,16 @@ func SetupServices(cfg config.Config) (
 
 	presenceRepo := redispresence.New(redisAdapter)
 	presenceSvc := presenceservice.New(cfg.PresenceService, presenceRepo)
-	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo, presenceSvc)
+
+	conn, err := grpc.Dial(":8086", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	presenceAdapter := presenceClient.New(conn)
+
+	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo, presenceAdapter)
 
 	return authSvc, userSvc, uV, backofficeUserSvc,
 		authorizationSvc, matchingSvc, matchingV, presenceSvc

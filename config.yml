@@ -24,7 +24,7 @@ matching_service:
 
 presence_service:
   expiration_time: "60m"
-  prefix: "presence"
+  prefix: "presence.proto"
 
 scheduler:
   match_waited_users_interval_in_seconds: 30
