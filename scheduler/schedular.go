@@ -7,6 +7,7 @@ import (
 	"game-app/service/matchingservice"
 	"github.com/go-co-op/gocron"
 	_ "github.com/go-co-op/gocron"
+	"log"
 	"sync"
 	"time"
 )
@@ -44,6 +45,7 @@ func (s Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 }
 
 func (s Scheduler) MatchWaitedUsers() {
+	log.Println("MatchWaitedUsers started... ")
 	ctx, cancel := context.WithTimeout(context.Background(),
 		2*time.Minute)
 	defer cancel()

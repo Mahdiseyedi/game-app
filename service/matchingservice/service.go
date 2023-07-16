@@ -9,6 +9,7 @@ import (
 	"game-app/param"
 	"game-app/pkg/richerror"
 	"game-app/pkg/timestamp"
+	"github.com/labstack/gommon/log"
 	"github.com/thoas/go-funk"
 	_ "github.com/thoas/go-funk"
 	"sync"
@@ -78,18 +79,25 @@ func (s Service) match(ctx context.Context, category category.Category, wg *sync
 	if err != nil {
 		//TODO - log Error
 		//TODO - update Metrics
+		log.Errorf("GetWaitingListByCategory, err: %v\n", err)
 		return
 	}
 
-	userIDs := make([]uint, len(list))
+	userIDs := make([]uint, 0)
 	for _, l := range list {
 		userIDs = append(userIDs, l.UserID)
+	}
+
+	if len(userIDs) < 2 {
+		return
 	}
 
 	PresenceList, err := s.presenceClient.GetPresence(ctx, param.GetPresenceRequest{UserIDs: userIDs})
 	if err != nil {
 		//TODO - log Error
 		//TODO - update Metrics
+
+		log.Errorf("GetWaitingListByCategory presenceClient.GetPresence, err: %v\n", err)
 		return
 	}
 
