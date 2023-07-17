@@ -14,10 +14,9 @@ import (
 )
 
 func main() {
-	cfg := config.Load("config.yml")
+	cfg := config.Load("../../../config.yml")
 
 	redisAdapter := redis.New(cfg.Redis)
-
 	topic := "matching.users_matched"
 
 	mu := player.MatchedUser{Category: category.FootballCategory,
@@ -28,10 +27,9 @@ func main() {
 		Category: string(mu.Category),
 		UserIDs:  slice.MapFromUintToUint64(mu.UserIDs),
 	}
-
 	payload, err := proto.Marshal(&pbMu)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("payload err: %v", err))
 	}
 
 	payloadStr := base64.StdEncoding.EncodeToString(payload)

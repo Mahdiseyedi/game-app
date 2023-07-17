@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	cfg := config.Load("config.yml")
+	cfg := config.Load("../../../config.yml")
 
 	redisAdapter := redis.New(cfg.Redis)
 
@@ -25,7 +25,7 @@ func main() {
 	for {
 		msg, err := subscriber.ReceiveMessage(context.Background())
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("main.subscriber.ReceiveMessage: %v", err))
 		}
 
 		switch msg.Channel {
@@ -40,13 +40,12 @@ func main() {
 func processUsersMatchedEvent(topic string, data string) {
 	payload, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		//panic(fmt.Sprintf("processUsersMatchedEvent: %s", err))
-		panic(err)
+		panic(fmt.Sprintf("processUsersMatchedEvent: %v", err))
 	}
 
 	pbMu := matching.MatchedUsers{}
 	if err := proto.Unmarshal(payload, &pbMu); err != nil {
-		panic(err)
+		panic(fmt.Sprintf("processUsersMatchedEvent.matching.MatchedUsers: %v", err))
 	}
 
 	mu := player.MatchedUser{

@@ -35,7 +35,7 @@ func (s Server) GetPresence(ctx context.Context,
 		return nil, err
 	}
 
-	return protobufmapper.MapGetPresenceResponseToProtobuf(resp), err
+	return protobufmapper.MapGetPresenceResponseToProtobuf(resp), nil
 }
 
 func (s Server) Start() {
@@ -44,7 +44,7 @@ func (s Server) Start() {
 	address := fmt.Sprintf(":%d", 8086)
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("presenceserver.Server.Start.listener: %v", err))
 	}
 
 	//step two : pbPresenceserver
