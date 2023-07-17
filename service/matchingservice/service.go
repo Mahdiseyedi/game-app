@@ -92,11 +92,11 @@ func (s Service) match(ctx context.Context, category category.Category, wg *sync
 		return
 	}
 
-	PresenceList, err := s.presenceClient.GetPresence(ctx, param.GetPresenceRequest{UserIDs: userIDs})
+	PresenceList, err := s.presenceClient.GetPresence(ctx,
+		param.GetPresenceRequest{UserIDs: userIDs})
 	if err != nil {
 		//TODO - log Error
 		//TODO - update Metrics
-
 		log.Errorf("GetWaitingListByCategory presenceClient.GetPresence, err: %v\n", err)
 		return
 	}
