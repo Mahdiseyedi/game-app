@@ -2,7 +2,7 @@ package player
 
 import "game-app/entity/category"
 
-type MatchedUser struct {
+type MatchedUsers struct {
 	Category category.Category
 	UserIDs  []uint
 }

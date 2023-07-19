@@ -2,39 +2,28 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"game-app/adapter/redis"
 	"game-app/config"
-	"game-app/contract/golang/matching"
 	"game-app/entity/category"
+	"game-app/entity/event"
 	"game-app/entity/player"
-	"game-app/pkg/slice"
-	"github.com/golang/protobuf/proto"
+	"game-app/pkg/protobufencoder"
 )
 
 func main() {
 	cfg := config.Load("../../../config.yml")
 
 	redisAdapter := redis.New(cfg.Redis)
-	topic := "matching.users_matched"
+	topic := event.MatchingUsersMatchedEvent
 
-	mu := player.MatchedUser{Category: category.FootballCategory,
-		UserIDs: []uint{1, 4},
+	mu := player.MatchedUsers{
+		Category: category.FootballCategory,
+		UserIDs:  []uint{1, 4},
 	}
 
-	pbMu := matching.MatchedUsers{
-		Category: string(mu.Category),
-		UserIDs:  slice.MapFromUintToUint64(mu.UserIDs),
-	}
-	payload, err := proto.Marshal(&pbMu)
-	if err != nil {
-		panic(fmt.Sprintf("payload err: %v", err))
-	}
-
-	payloadStr := base64.StdEncoding.EncodeToString(payload)
-
-	if err := redisAdapter.Client().Publish(context.Background(), topic, payloadStr).Err(); err != nil {
+	payload := protobufencoder.EncodeMatchingUsersMatchedEvent(mu)
+	if err := redisAdapter.Client().Publish(context.Background(), string(topic), payload).Err(); err != nil {
 		panic(fmt.Sprintf("publish err: %v", err))
 	}
 }

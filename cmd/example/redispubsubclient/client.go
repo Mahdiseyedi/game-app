@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"game-app/adapter/redis"
 	"game-app/config"
-	"game-app/contract/golang/matching"
-	"game-app/entity/category"
-	"game-app/entity/player"
-	"game-app/pkg/slice"
-	"github.com/golang/protobuf/proto"
+	"game-app/entity/event"
+	"game-app/pkg/protobufencoder"
 )
 
 func main() {
@@ -18,9 +14,9 @@ func main() {
 
 	redisAdapter := redis.New(cfg.Redis)
 
-	topic := "matching.users_matched"
+	topic := event.MatchingUsersMatchedEvent
 
-	subscriber := redisAdapter.Client().Subscribe(context.Background(), topic)
+	subscriber := redisAdapter.Client().Subscribe(context.Background(), string(topic))
 
 	for {
 		msg, err := subscriber.ReceiveMessage(context.Background())
@@ -28,7 +24,7 @@ func main() {
 			panic(fmt.Sprintf("main.subscriber.ReceiveMessage: %v", err))
 		}
 
-		switch msg.Channel {
+		switch event.Event(msg.Channel) {
 		case topic:
 			processUsersMatchedEvent(msg.Channel, msg.Payload)
 		default:
@@ -38,19 +34,8 @@ func main() {
 }
 
 func processUsersMatchedEvent(topic string, data string) {
-	payload, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		panic(fmt.Sprintf("processUsersMatchedEvent: %v", err))
-	}
 
-	pbMu := matching.MatchedUsers{}
-	if err := proto.Unmarshal(payload, &pbMu); err != nil {
-		panic(fmt.Sprintf("processUsersMatchedEvent.matching.MatchedUsers: %v", err))
-	}
-
-	mu := player.MatchedUser{
-		UserIDs:  slice.MapFromUint64ToUint(pbMu.UserIDs),
-		Category: category.Category(pbMu.Category)}
+	mu := protobufencoder.DecodeMatchingUsersMatchedEvent(data)
 
 	fmt.Println("Received message from " + topic + " topic.")
 	fmt.Printf("matched users %+v\n", mu)
