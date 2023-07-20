@@ -22,7 +22,6 @@ import (
 	"game-app/service/matchingservice"
 	"game-app/service/presenceservice"
 	"game-app/service/userservice"
-	"google.golang.org/grpc"
 	_ "google.golang.org/grpc"
 	"os"
 	"os/signal"
@@ -42,15 +41,9 @@ func main() {
 	//TODO - add command for migrations
 	mgr.Up()
 
-	presenceGrpcConn, err := grpc.Dial(":8086", grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	defer presenceGrpcConn.Close()
-
 	//TODO - add struct and add these returned items as struct field
 	authSvc, userSvc, userValidator, backofficeSvc, authorizationSvc,
-		matchingSvc, matchingV, presencSvc := SetupServices(cfg, presenceGrpcConn)
+		matchingSvc, matchingV, presencSvc := SetupServices(cfg)
 
 	server := httpserver.New(cfg, authSvc, userSvc, userValidator,
 		backofficeSvc, authorizationSvc, matchingSvc, matchingV, presencSvc)
@@ -89,7 +82,7 @@ func main() {
 	wg.Wait()
 }
 
-func SetupServices(cfg config.Config, presenceGrpcConn *grpc.ClientConn) (
+func SetupServices(cfg config.Config) (
 	authservice.Service, userservice.Service, uservalidator.Validator,
 	backofficeuserservice.Service, authorizationservice.Service,
 	matchingservice.Service, matchingvalidator.Validator,
@@ -113,8 +106,8 @@ func SetupServices(cfg config.Config, presenceGrpcConn *grpc.ClientConn) (
 	presenceRepo := redispresence.New(redisAdapter)
 	presenceSvc := presenceservice.New(cfg.PresenceService, presenceRepo)
 
-	presenceAdapter := presenceClient.New(presenceGrpcConn)
-	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo, presenceAdapter)
+	presenceAdapter := presenceClient.New(":8086")
+	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo, presenceAdapter, redisAdapter)
 
 	return authSvc, userSvc, uV, backofficeUserSvc,
 		authorizationSvc, matchingSvc, matchingV, presenceSvc

@@ -3,6 +3,7 @@ package matchingservice
 import (
 	"context"
 	"fmt"
+	"game-app/contract/broker"
 	"game-app/entity/category"
 	"game-app/entity/event"
 	"game-app/entity/player"
@@ -16,10 +17,6 @@ import (
 	"sync"
 	"time"
 )
-
-type Publisher interface {
-	Publish(event event.Event, payload string)
-}
 
 //TODO - add ctx to all repo and use-case method if need
 type Repo interface {
@@ -42,10 +39,10 @@ type Service struct {
 	config         Config
 	repo           Repo
 	presenceClient PresenceClient
-	pub            Publisher
+	pub            broker.Publisher
 }
 
-func New(config Config, repo Repo, presenceClient PresenceClient, pub Publisher) Service {
+func New(config Config, repo Repo, presenceClient PresenceClient, pub broker.Publisher) Service {
 	return Service{config: config, repo: repo, presenceClient: presenceClient, pub: pub}
 }
 
@@ -118,7 +115,7 @@ func (s Service) match(ctx context.Context, category category.Category, wg *sync
 	var finalList = make([]waiting_member.WaitingMember, 0)
 	for _, l := range list {
 		lastOnLineTimestamp, ok := getPresenceItem(PresenceList, l.UserID)
-		if ok && lastOnLineTimestamp > timestamp.Add(-20*time.Second) &&
+		if ok && lastOnLineTimestamp > timestamp.Add(-60*time.Second) &&
 			l.Timestamp > timestamp.Add(-300*time.Second) {
 			finalList = append(finalList, l)
 		} else {
@@ -142,7 +139,6 @@ func (s Service) match(ctx context.Context, category category.Category, wg *sync
 
 		go s.pub.Publish(event.MatchingUsersMatchedEvent,
 			protobufencoder.EncodeMatchingUsersMatchedEvent(mu))
-		//publish a new event for mu
 
 		//remove mu users from waiting list
 		matchedUsersToBeRemoved = append(matchedUsersToBeRemoved, mu.UserIDs...)

@@ -2,7 +2,7 @@ package protobufencoder
 
 import (
 	"encoding/base64"
-	"game-app/contract/golang/matching"
+	"game-app/contract/goproto/matching"
 	"game-app/entity/category"
 	"game-app/entity/player"
 	"game-app/pkg/slice"
@@ -11,7 +11,7 @@ import (
 
 func EncodeMatchingUsersMatchedEvent(mu player.MatchedUsers) string {
 	pbMu := matching.MatchedUsers{
-		UserIDs:  slice.MapFromUintToUint64(mu.UserIDs),
+		User_IDs: slice.MapFromUintToUint64(mu.UserIDs),
 		Category: string(mu.Category),
 	}
 
@@ -42,6 +42,6 @@ func DecodeMatchingUsersMatchedEvent(data string) player.MatchedUsers {
 
 	return player.MatchedUsers{
 		Category: category.Category(pbMu.Category),
-		UserIDs:  slice.MapFromUint64ToUint(pbMu.UserIDs),
+		UserIDs:  slice.MapFromUint64ToUint(pbMu.User_IDs),
 	}
 }

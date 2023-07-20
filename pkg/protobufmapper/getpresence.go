@@ -1,7 +1,7 @@
 package protobufmapper
 
 import (
-	"game-app/contract/golang/presence"
+	"game-app/contract/goproto/presence"
 	"game-app/param"
 )
 
